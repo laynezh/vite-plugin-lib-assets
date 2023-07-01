@@ -1,0 +1,76 @@
+{
+  "name": "@laynezh/vite-plugin-lib-assets",
+  "type": "module",
+  "version": "0.1.0",
+  "packageManager": "pnpm@8.6.0",
+  "description": "Vite 插件：用于提取 lib 构建模式下引用到的资源文件，而不是以 base64 形式内联它们",
+  "license": "MIT",
+  "homepage": "https://github.com/laynezh/vite-plugin-lib-assets#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/laynezh/vite-plugin-lib-assets.git"
+  },
+  "bugs": {
+    "url": "https://github.com/laynezh/vite-plugin-lib-assets/issues"
+  },
+  "keywords": [
+    "vite-plugin",
+    "vite",
+    "generate lib assets"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    },
+    "./*": "./*"
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*",
+        "./*"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch src",
+    "build:fix": "esno scripts/postbuild.ts",
+    "lint": "eslint .",
+    "play": "npm -C playground run dev",
+    "prepublishOnly": "npm run build",
+    "release": "bumpp && npm publish",
+    "start": "esno src/index.ts",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "loader-utils": "^3.2.1"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^0.39.5",
+    "@types/loader-utils": "^2.0.3",
+    "@types/node": "^18.16.16",
+    "bumpp": "^9.1.0",
+    "chalk": "^5.2.0",
+    "eslint": "^8.42.0",
+    "esno": "^0.16.3",
+    "fast-glob": "^3.2.12",
+    "nodemon": "^2.0.22",
+    "rimraf": "^5.0.1",
+    "tsup": "^6.7.0",
+    "typescript": "^5.1.3",
+    "vite": "^4.3.9",
+    "vitest": "^0.31.4"
+  },
+  "volta": {
+    "node": "18.16.1"
+  }
+}
