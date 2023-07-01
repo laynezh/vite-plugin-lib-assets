@@ -51,6 +51,10 @@
     "start": "esno src/index.ts",
     "test": "vitest"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "dependencies": {
     "loader-utils": "^3.2.1"
   },
