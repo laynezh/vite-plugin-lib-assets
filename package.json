@@ -1,7 +1,7 @@
 {
   "name": "@laynezh/vite-plugin-lib-assets",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "packageManager": "pnpm@8.6.0",
   "description": "Vite 插件：用于提取 lib 构建模式下引用到的资源文件，而不是以 base64 形式内联它们",
   "license": "MIT",
