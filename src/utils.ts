@@ -15,12 +15,11 @@ export function checkFormats(formats: LibraryFormats[]) {
   return {
     isIntermidiateFormat,
     isFinalFormat,
-    // isIntermidiateFormat、isFinalFormat 一个为 true 一个为 false
+    // Valid if either `isIntermidiateFormat` or `isFinalFormat` is true.
     valid: Number(isIntermidiateFormat) + Number(isFinalFormat) === 1,
   }
 }
 
-// 缓存重复引入的文件内容
 const assetsContentMap = new Map<string, Buffer>()
 export function getAssetContent(id: string) {
   let content: Buffer | undefined | null = assetsContentMap.get(id)

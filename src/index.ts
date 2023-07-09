@@ -51,7 +51,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         const result = checkFormats(formats)
         if (!result.valid) {
           throw new Error(
-            `Vite 配置异常，插件仅支持 build.lib.formats 类型为 Array<'es' | 'cjs'> | Array<'umd' | 'iife'>，当前传入的是 ${formats}`
+            `[vite-plugin-lib-assets]: Configuration error. The plugin requires the "build.lib.formats" option to be either Array<'es' | 'cjs'> or Array<'umd' | 'iife'>, provided is ${formats}`,
           )
         }
         isIntermidiateFormat = result.isIntermidiateFormat
@@ -67,7 +67,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       const importerDir = importer.endsWith('/')
         ? importer
         : path.dirname(importer)
-      // 引入文件的完整路径
+      // Full path of the imported file
       const id = path.resolve(importerDir, source)
       const [pureId, resourceQuery] = id.split('?')
       const ext = path.extname(pureId)
@@ -103,13 +103,13 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
           type: 'asset',
         })
 
-        // 非 es、cjs 格式构建，暂存资源地址供 load 使用
+        // Cache the resource address for the "load" hook
         if (!isIntermidiateFormat) {
           assetsPathMap.set(id, assetPath)
           return id
         }
 
-        // es、cjs 格式构建 external 文件，转译成 require('./assets/image.hash.png')
+        // External file with the configured path, eg. './assets/image.hash.png'
         return {
           id: `./${assetPath}`,
           external: 'relative',
