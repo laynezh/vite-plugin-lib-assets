@@ -82,7 +82,7 @@ Output name of the resource file, its usage aligns with the [`name`](https://git
     ```
 > The complete list can be found at [`loader-utils#interpolatename`](https://github.com/webpack/loader-utils#interpolatename)
 
-`limit`
+### `limit`
 
 Files larger than the `limit` will be extracted to the output directory, smaller files will remain embedded in the artifact in base64 format.
 
@@ -95,7 +95,7 @@ Files larger than the `limit` will be extracted to the output directory, smaller
   })
   ```
 
-`extensions`
+### `extensions`
 
 File types to be processed.
 
@@ -149,7 +149,7 @@ Specifies a Regular Expression to extract parts of content(capture groups) from 
   })
   ```
 
-`publicUrl`
+### `publicUrl`
 
 Access path prefix for built resource files in the browser. ***Applies exclusively to `umd | iife` format builds.***
 
