@@ -24,8 +24,6 @@ pnpm add @laynezh/vite-plugin-lib-assets -D
 
 ## Usage
 
-**Notice**: The plugin only accepts either `Array<'es' | 'cjs'>` or `Array<'umd' | 'iife'>` as the `build.lib.formats` option. If you wish to build both `es` and `umd` formats, please create separate builds for each.
-
 ```typescript
 // vite.config.ts
 import libAssetsPlugin from '@laynezh/vite-plugin-lib-assets'
@@ -151,7 +149,7 @@ Specifies a Regular Expression to extract parts of content(capture groups) from 
 
 ### `publicUrl`
 
-Access path prefix for built resource files in the browser. ***Applies exclusively to `umd | iife` format builds.***
+Access path prefix for built resource files. ***Once provided, it will take effect, even while building the cjs and esm formats.***
 
 - Type: `string`
 - Default: `''`

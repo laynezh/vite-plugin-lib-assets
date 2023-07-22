@@ -24,8 +24,6 @@ pnpm add @laynezh/vite-plugin-lib-assets -D
 
 ## 使用
 
-**注意⚠️**：插件要求 Vite 的 `build.lib.formats` 选项只能是 `Array<'es' | 'cjs'>` 或 `Array<'umd' | 'iife'>`，如果需要构建 `es` 和 `umd` 请拆分成独立的构建任务。
-
 ```typescript
 // vite.config.ts
 import libAssets from '@laynezh/vite-plugin-lib-assets'
@@ -152,7 +150,7 @@ export interface Options {
 
 ### `publicUrl`
 
-资源部署到 CDN 时的路径前缀，仅在构建 `umd ｜ iife` 格式时生效
+资源部署到 CDN 时的路径前缀，***这个选项在构建 `cjs` 和 `esm` 格式时也会生效***
 
 - Type: `string`
 - Default: `''`
