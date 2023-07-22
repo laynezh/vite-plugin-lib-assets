@@ -41,14 +41,41 @@ Example: [`playground/`](./playground/)
 
 ```typescript
 export interface Options {
+  include?: string | RegExp | (string | RegExp)[]
+  exclude?: string | RegExp | (string | RegExp)[]
   name?: string | ((resourcePath: string, resourceQuery: string) => string)
   limit?: number
-  extensions?: string[]
   outputPath?: string | ((url: string, resourcePath: string, resourceQuery: string) => string)
   regExp?: RegExp
   publicUrl?: string
 }
 ```
+
+### `include`
+
+一个或一组 [picomatch](https://github.com/micromatch/picomatch#globbing-features) 表达式，指明哪些文件需要被插件处理。
+
+- Type: `string | RegExp | (string | RegExp)[]`
+- Default: 与 Vite [`assetsInclude`](https://vitejs.dev/config/shared-options.html#assetsinclude) 选项的默认值一样，可以在[这里](https://github.com/vitejs/vite/blob/main/packages/vite/src/node/constants.ts#L91-L135)找到完整的列表。
+- Example:
+  ```typescript
+  libAssetsPlugin({
+    include: /\.a?png(\?.*)?$/
+  })
+  ```
+
+### `exclude`
+
+和 `include` 一样，但是用来指明哪些文件需要被插件忽略。
+
+- Type: `string | RegExp | (string | RegExp)[]`
+- Default: `undefined`.
+- Example:
+  ```typescript
+  libAssetsPlugin({
+    exclude: /\.svg(\?.*)?$/
+  })
+  ```
 
 ### name
 
@@ -90,20 +117,6 @@ export interface Options {
   ```typescript
   assetsLibPlugin({
     limit: 1024 * 8 // 8KB
-  })
-  ```
-
-### `extensions`
-
-需要处理的资源文件类型
-
-- Type: `string[]`
-- Default: `['.jpg', '.jpeg', '.png', '.apng', '.gif', '.bmp', '.svg', '.webp']`
-- Example:
-  ```typescript
-  assetsLibPlugin({
-    // 仅处理以下文件
-    extensions: ['.jpg', '.png', '.webp']
   })
   ```
 
