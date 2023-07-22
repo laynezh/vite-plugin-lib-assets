@@ -34,7 +34,6 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   let isLibBuild = false
   let assetsDir: string
   let outDir: string
-  let isIntermidiateFormat = false
 
   const assetsPathMap = new Map<string, string>()
 
@@ -48,13 +47,12 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       outDir = build.outDir
       if (build.lib !== false) {
         const { formats = ['es', 'umd'] } = build.lib
-        const result = checkFormats(formats)
-        if (!result.valid) {
-          throw new Error(
-            `[vite-plugin-lib-assets]: Configuration error. The plugin requires the "build.lib.formats" option to be either Array<'es' | 'cjs'> or Array<'umd' | 'iife'>, provided is ${formats}`,
+        const valid = checkFormats(formats)
+        if (!valid && publicUrl) {
+          console.warn(
+            '[vite-plugin-lib-assets] The publicUrl configuration will be applied to all output formats.',
           )
         }
-        isIntermidiateFormat = result.isIntermidiateFormat
       }
     },
     async resolveId(source, importer) {
@@ -104,7 +102,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         })
 
         // Cache the resource address for the "load" hook
-        if (!isIntermidiateFormat) {
+        if (publicUrl) {
           assetsPathMap.set(id, assetPath)
           return id
         }

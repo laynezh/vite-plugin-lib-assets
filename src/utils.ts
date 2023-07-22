@@ -12,12 +12,7 @@ export function checkFormats(formats: LibraryFormats[]) {
   const isIntermidiateFormat = formats.some(format => intermidiateFormats.includes(format as IntermidiateFormats[number]))
   const isFinalFormat = formats.some(format => finalFormats.includes(format as FinalFormats[number]))
 
-  return {
-    isIntermidiateFormat,
-    isFinalFormat,
-    // Valid if either `isIntermidiateFormat` or `isFinalFormat` is true.
-    valid: Number(isIntermidiateFormat) + Number(isFinalFormat) === 1,
-  }
+  return Number(isIntermidiateFormat) + Number(isFinalFormat) === 1
 }
 
 const assetsContentMap = new Map<string, Buffer>()
