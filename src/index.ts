@@ -1,8 +1,8 @@
 import path from 'node:path'
-import type { Plugin } from 'vite'
+import { type Plugin, createFilter } from 'vite'
 import { interpolateName } from 'loader-utils'
 import { checkFormats, getAssetContent } from './utils'
-import { DEFAULT_EXTENSIONS } from './constants'
+import { DEFAULT_ASSETS_RE } from './constants'
 
 type LoaderContext = Parameters<typeof interpolateName>[0]
 
@@ -14,9 +14,10 @@ type FuncOutputPath = (
 ) => string
 
 export interface Options {
+  include?: string | RegExp | (string | RegExp)[]
+  exclude?: string | RegExp | (string | RegExp)[]
   name?: string | FuncName
   limit?: number
-  extensions?: string[]
   outputPath?: string | FuncOutputPath
   regExp?: RegExp
   publicUrl?: string
@@ -24,17 +25,19 @@ export interface Options {
 
 export default function VitePluginLibAssets(options: Options = {}): Plugin {
   const {
+    include = DEFAULT_ASSETS_RE,
+    exclude,
     name = '[contenthash].[ext]',
     limit,
     outputPath,
     regExp,
-    extensions = DEFAULT_EXTENSIONS,
     publicUrl = '',
   } = options
   let isLibBuild = false
   let assetsDir: string
   let outDir: string
 
+  const filter = createFilter(include, exclude)
   const assetsPathMap = new Map<string, string>()
 
   return {
@@ -67,9 +70,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         : path.dirname(importer)
       // Full path of the imported file
       const id = path.resolve(importerDir, source)
-      const [pureId, resourceQuery] = id.split('?')
-      const ext = path.extname(pureId)
-      if (ext && extensions.includes(ext)) {
+      if (filter(id)) {
         const content = getAssetContent(id)
 
         if (!content)
@@ -78,6 +79,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         if (limit && content.byteLength < limit)
           return null
 
+        const [pureId, resourceQuery] = id.split('?')
         const context = {
           resourcePath: pureId,
           resourceQuery,
