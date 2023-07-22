@@ -41,14 +41,41 @@ Example: [`playground/`](./playground/)
 
 ```typescript
 export interface Options {
+  include?: string | RegExp | (string | RegExp)[]
+  exclude?: string | RegExp | (string | RegExp)[]
   name?: string | ((resourcePath: string, resourceQuery: string) => string)
   limit?: number
-  extensions?: string[]
   outputPath?: string | ((url: string, resourcePath: string, resourceQuery: string) => string)
   regExp?: RegExp
   publicUrl?: string
 }
 ```
+
+### `include`
+
+A valid [picomatch](https://github.com/micromatch/picomatch#globbing-features) pattern, or array of patterns indicate which files need to be handled by the plugin.
+
+- Type: `string | RegExp | (string | RegExp)[]`
+- Default: Same as Vite's default value for [`assetsInclude`](https://vitejs.dev/config/shared-options.html#assetsinclude), you can find the complete list [here](https://github.com/vitejs/vite/blob/main/packages/vite/src/node/constants.ts#L91-L135).
+- Example:
+  ```typescript
+  libAssetsPlugin({
+    include: /\.a?png(\?.*)?$/
+  })
+  ```
+
+### `exclude`
+
+Same as `include`, but it is used to indicate the files that should to be omitted.
+
+- Type: `string | RegExp | (string | RegExp)[]`
+- Default: `undefined`.
+- Example:
+  ```typescript
+  libAssetsPlugin({
+    exclude: /\.svg(\?.*)?$/
+  })
+  ```
 
 ### `name`
 
@@ -90,20 +117,6 @@ Files larger than the `limit` will be extracted to the output directory, smaller
   ```typescript
   libAssetsPlugin({
     limit: 1024 * 8 // 8KB
-  })
-  ```
-
-### `extensions`
-
-File types to be processed.
-
-- Type: `string[]`
-- Default: `['.jpg', '.jpeg', '.png', '.apng', '.gif', '.bmp', '.svg', '.webp']`
-- Example:
-  ```typescript
-  libAssetsPlugin({
-    // Only process the following file types
-    extensions: ['.jpg', '.png', '.webp']
   })
   ```
 
