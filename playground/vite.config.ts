@@ -1,17 +1,23 @@
 import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
 import Inspect from 'vite-plugin-inspect'
 import libAssets from '../src/'
 
 export default defineConfig({
   build: {
     lib: {
-      entry: './main.ts',
+      name: 'main',
+      entry: './src/main.ts',
       fileName: 'main',
-      formats: ['cjs'],
+      formats: ['es'],
     },
     minify: false,
+    rollupOptions: {
+      external: ['vue'],
+    },
   },
   plugins: [
+    vue(),
     Inspect(),
     libAssets({
       name: '[name].[contenthash:8].[ext]',
