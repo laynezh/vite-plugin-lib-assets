@@ -11,6 +11,9 @@ importers:
       loader-utils:
         specifier: ^3.2.1
         version: 3.2.1
+      mrmime:
+        specifier: ^1.0.1
+        version: 1.0.1
     devDependencies:
       '@antfu/eslint-config':
         specifier: ^0.39.5
@@ -59,7 +62,7 @@ importers:
     devDependencies:
       vite:
         specifier: ^4.3.9
-        version: 4.3.9(@types/node@18.16.19)
+        version: 4.3.9
       vite-plugin-inspect:
         specifier: ^0.7.28
         version: 0.7.32(vite@4.3.9)
@@ -2810,7 +2813,6 @@ packages:
   /mrmime@1.0.1:
     resolution: {integrity: sha512-hzzEagAgDyoU1Q6yg5uI+AorQgdvMCur3FcKf7NhMKWsaYg+RnbTyHRa/9IlLF9rf455MOCtcqqrQQ83pPP7Uw==}
     engines: {node: '>=10'}
-    dev: true
 
   /ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
@@ -3877,10 +3879,42 @@ packages:
       open: 9.1.0
       picocolors: 1.0.0
       sirv: 2.0.3
-      vite: 4.3.9(@types/node@18.16.19)
+      vite: 4.3.9
     transitivePeerDependencies:
       - rollup
       - supports-color
+    dev: true
+
+  /vite@4.3.9:
+    resolution: {integrity: sha512-qsTNZjO9NoJNW7KnOrgYwczm0WctJ8m/yqYAMAK9Lxt4SoySUfS5S8ia9K7JHpa3KEeMfyF8LoJ3c5NeBJy6pg==}
+    engines: {node: ^14.18.0 || >=16.0.0}
+    hasBin: true
+    peerDependencies:
+      '@types/node': '>= 14'
+      less: '*'
+      sass: '*'
+      stylus: '*'
+      sugarss: '*'
+      terser: ^5.4.0
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+      less:
+        optional: true
+      sass:
+        optional: true
+      stylus:
+        optional: true
+      sugarss:
+        optional: true
+      terser:
+        optional: true
+    dependencies:
+      esbuild: 0.17.19
+      postcss: 8.4.24
+      rollup: 3.26.0
+    optionalDependencies:
+      fsevents: 2.3.2
     dev: true
 
   /vite@4.3.9(@types/node@18.16.19):

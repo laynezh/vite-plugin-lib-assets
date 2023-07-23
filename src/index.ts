@@ -1,8 +1,12 @@
+import fs from 'node:fs'
 import path from 'node:path'
+import { promisify } from 'node:util'
+import type { Buffer } from 'node:buffer'
 import { type Plugin, createFilter } from 'vite'
+import { type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
-import { checkFormats, getAssetContent } from './utils'
-import { DEFAULT_ASSETS_RE } from './constants'
+import { checkFormats, getAssetContent, getCaptured, getFileBase64 } from './utils'
+import { CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE } from './constants'
 
 type LoaderContext = Parameters<typeof interpolateName>[0]
 
@@ -38,7 +42,50 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   let outDir: string
 
   const filter = createFilter(include, exclude)
+  const cssLangFilter = createFilter(CSS_LANGS_RE)
   const assetsPathMap = new Map<string, string>()
+  const base64AssetsPathMap = new Map<string, string>()
+  const emitFile = (context: PluginContext, id: string, content: Buffer): string => {
+    const [pureId, resourceQuery] = id.split('?')
+    const loaderContext = {
+      resourcePath: pureId,
+      resourceQuery,
+    } as LoaderContext
+    // @ts-expect-error loader-utils
+    const url = interpolateName(loaderContext, name, { content, regExp })
+
+    let assetPath = url
+    const outputDir = outputPath || assetsDir
+    assetPath = typeof outputDir === 'function'
+      ? outputDir(url, pureId, resourceQuery)
+      : path.join(outputDir, url)
+
+    const filename = assetPath.replace(`?${resourceQuery}`, '')
+    const fullname = path.join(process.cwd(), outDir, assetPath)
+
+    context.emitFile({
+      fileName: filename,
+      name: fullname,
+      source: content,
+      type: 'asset',
+    })
+
+    return assetPath
+  }
+
+  const extractAssetsFromCss = (id: string): string[] => {
+    const content = getAssetContent(id)
+    if (!content)
+      return []
+
+    const source = content.toString()
+    const cssUrlAssets = getCaptured(source, cssUrlRE)
+    const cssImageSetAssets = getCaptured(source, cssImageSetRE)
+    const assets = [...cssUrlAssets, ...cssImageSetAssets]
+
+    const importerDir = id.endsWith('/') ? id : path.dirname(id)
+    return Array.from(new Set(assets.map(asset => path.resolve(importerDir, asset))))
+  }
 
   return {
     name: 'vite-plugin-lib-assets',
@@ -70,6 +117,21 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         : path.dirname(importer)
       // Full path of the imported file
       const id = path.resolve(importerDir, source)
+
+      if (cssLangFilter(id)) {
+        const assetsFromCss = extractAssetsFromCss(id)
+        const validAssets = assetsFromCss
+          .filter(id => filter(id))
+          .map(id => ({ id, content: getAssetContent(id) }))
+          .filter(({ content }) => limit && content ? content.byteLength < limit : true)
+
+        validAssets.forEach(({ id, content }) => {
+          const assetPath = emitFile(this, id, content!)
+          const base64 = getFileBase64(id, content!)
+          base64AssetsPathMap.set(base64, assetPath)
+        })
+      }
+
       if (filter(id)) {
         const content = getAssetContent(id)
 
@@ -79,29 +141,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         if (limit && content.byteLength < limit)
           return null
 
-        const [pureId, resourceQuery] = id.split('?')
-        const context = {
-          resourcePath: pureId,
-          resourceQuery,
-        } as LoaderContext
-        // @ts-expect-error loader-utils
-        const url = interpolateName(context, name, { content, regExp })
-
-        let assetPath = url
-        const outputDir = outputPath || assetsDir
-        assetPath = typeof outputDir === 'function'
-          ? outputDir(url, pureId, resourceQuery)
-          : path.join(outputDir, url)
-
-        const filename = assetPath.replace(`?${resourceQuery}`, '')
-        const fullname = path.join(process.cwd(), outDir, assetPath)
-
-        this.emitFile({
-          fileName: filename,
-          name: fullname,
-          source: content,
-          type: 'asset',
-        })
+        const assetPath = emitFile(this, id, content)
 
         // Cache the resource address for the "load" hook
         if (publicUrl) {
@@ -125,6 +165,22 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         const publicDir = publicUrl.endsWith('/') ? publicUrl : `${publicUrl}/`
         return `export default '${publicDir}${assetPath}'`
       }
+    },
+    async writeBundle(_, outputBundle) {
+      const assets = base64AssetsPathMap.entries()
+      Object.keys(outputBundle)
+        .filter(name => path.extname(name) === '.css')
+        .forEach(async (name) => {
+          const bundle = outputBundle[name]
+          const isBundleAsset = 'source' in bundle
+          let source = isBundleAsset ? String(bundle.source) : bundle.code
+          Array.from(assets).forEach(([base64, asset]) => {
+            source = source.replaceAll(base64, `./${asset}`)
+          })
+
+          const outputPath = path.join(process.cwd(), outDir, name)
+          await promisify(fs.writeFile)(outputPath, source)
+        })
     },
   }
 }

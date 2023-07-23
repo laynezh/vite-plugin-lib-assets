@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import type { Buffer } from 'node:buffer'
 import type { LibraryFormats } from 'vite'
+import * as mrmime from 'mrmime'
 
 type IntermidiateFormats = Array<'es' | 'cjs'>
 type FinalFormats = Array<'umd' | 'iife'>
@@ -31,4 +32,29 @@ export function getAssetContent(id: string) {
   }
 
   return content
+}
+
+const postfixRE = /[?#].*$/s
+function cleanUrl(url: string): string {
+  return url.replace(postfixRE, '')
+}
+
+export function getFileBase64(id: string, content: Buffer): string {
+  const file = cleanUrl(id)
+  const mimeType = mrmime.lookup(file) ?? 'application/octet-stream'
+  // base64 inlined as a string
+  return `data:${mimeType};base64,${content!.toString('base64')}`
+}
+
+export function getCaptured(input: string, re: RegExp): string[] {
+  const captures = []
+  let match: RegExpExecArray | null
+  let remaining = input
+  // eslint-disable-next-line no-cond-assign
+  while (match = re.exec(remaining)) {
+    match[1] !== undefined && captures.push(match[1])
+    remaining = remaining.slice(match.index + match[0].length)
+  }
+
+  return captures
 }
