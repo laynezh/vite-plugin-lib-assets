@@ -43,3 +43,11 @@ export const KNOWN_ASSET_TYPES = [
 export const DEFAULT_ASSETS_RE = new RegExp(
   `\\.(${KNOWN_ASSET_TYPES.join('|')})(\\?.*)?$`,
 )
+
+export const CSS_LANGS_RE = /\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss)(?:$|\?)/
+
+// https://drafts.csswg.org/css-syntax-3/#identifier-code-point
+export const cssUrlRE = /(?<=^|[^\w\-\u0080-\uFFFF])url\((\s*('[^']+'|"[^"]+")\s*|[^'")]+)\)/
+
+// Assuming a function name won't be longer than 256 chars
+export const cssImageSetRE = /(?<=image-set\()((?:[\w\-]{1,256}\([^)]*\)|[^)])*)(?=\))/
