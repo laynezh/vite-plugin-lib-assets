@@ -122,7 +122,7 @@ export interface Options {
 
 ### `outputPath`
 
-指定资源共用的输出路径，用法与 `file-loader` 的 [`outputPath`](https://github.com/webpack-contrib/file-loader#publicpath) 配置一致
+指定资源共用的输出路径
 
 - Type: `string | ((url: string, resourcePath: string, resourceQuery: string) => string)`
 - Default: `Vite` 的 [`assetsDir`](https://vitejs.dev/config/build-options.html#build-assetsdir) 配置

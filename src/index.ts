@@ -57,7 +57,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     let assetPath = url
     const outputDir = outputPath || assetsDir
     assetPath = typeof outputDir === 'function'
-      ? outputDir(url, pureId, resourceQuery)
+      ? path.join(outputDir(url, pureId, resourceQuery), url)
       : path.join(outputDir, url)
 
     const filename = assetPath.replace(`?${resourceQuery}`, '')
