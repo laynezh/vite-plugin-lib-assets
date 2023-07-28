@@ -122,7 +122,7 @@ Files larger than the `limit` will be extracted to the output directory, smaller
 
 ### `outputPath`
 
-Specify the output path where the extracted files will be placed, its usage aligns with the [`outputPath`](https://github.com/webpack-contrib/file-loader#publicpath) option of the `file-loader`.
+Specify the output path where the extracted files will be placed.
 
 - Type: `string | ((url: string, resourcePath: string, resourceQuery: string) => string)`
 - Default: `Vite`'s [`assetsDir`](https://vitejs.dev/config/build-options.html#build-assetsdir) configuration.
