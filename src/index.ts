@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import type { Buffer } from 'node:buffer'
-import { type Plugin, createFilter } from 'vite'
+import { type Plugin, type ResolvedConfig, createFilter, preprocessCSS } from 'vite'
 import { type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
 import { checkFormats, getAssetContent, getCaptured, getFileBase64 } from './utils'
@@ -40,6 +40,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   let isLibBuild = false
   let assetsDir: string
   let outDir: string
+  let viteConfig: ResolvedConfig
 
   const filter = createFilter(include, exclude)
   const cssLangFilter = createFilter(CSS_LANGS_RE)
@@ -73,12 +74,14 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     return assetPath
   }
 
-  const extractAssetsFromCss = (id: string): string[] => {
+  const extractAssetsFromCss = async (id: string): Promise<string[]> => {
     const content = getAssetContent(id)
     if (!content)
       return []
 
-    const source = content.toString()
+    const result = await preprocessCSS(content.toString(), id, viteConfig)
+
+    const source = result.code
     const cssUrlAssets = getCaptured(source, cssUrlRE)
     const cssImageSetAssets = getCaptured(source, cssImageSetRE)
     const assets = [...cssUrlAssets, ...cssImageSetAssets]
@@ -91,7 +94,9 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     name: 'vite-plugin-lib-assets',
     apply: 'build',
     enforce: 'pre',
-    configResolved({ build }) {
+    configResolved(config) {
+      viteConfig = config
+      const { build } = config
       isLibBuild = build.lib !== false
       assetsDir = build.assetsDir
       outDir = build.outDir
@@ -119,7 +124,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       const id = path.resolve(importerDir, source)
 
       if (cssLangFilter(id)) {
-        const assetsFromCss = extractAssetsFromCss(id)
+        const assetsFromCss = await extractAssetsFromCss(id)
         const validAssets = assetsFromCss
           .filter(id => filter(id))
           .map(id => ({ id, content: getAssetContent(id) }))
