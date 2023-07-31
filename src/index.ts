@@ -110,11 +110,8 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         }
       }
     },
-    async resolveId(source, importer) {
+    async resolveId(source, importer = '') {
       if (!isLibBuild)
-        return null
-
-      if (importer === undefined)
         return null
 
       const importerDir = importer.endsWith('/')
