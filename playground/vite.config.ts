@@ -7,7 +7,10 @@ export default defineConfig({
   build: {
     lib: {
       name: 'main',
-      entry: './src/main.ts',
+      entry: {
+        main: './src/main.ts',
+        mainCss: './src/main.css',
+      },
       fileName: 'main',
       formats: ['es'],
     },

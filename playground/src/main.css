@@ -1,0 +1,6 @@
+@import "./local-imported.css";
+@import "vite-plugin-inspect/dist/client/assets/index-acac2a07.css";
+
+.test {
+  color: red;
+}
