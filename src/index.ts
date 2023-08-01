@@ -88,9 +88,14 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     const cssUrlAssets = getCaptured(source, cssUrlRE)
     const cssImageSetAssets = getCaptured(source, cssImageSetRE)
     const assets = [...cssUrlAssets, ...cssImageSetAssets]
+    const pureAssets = assets.map(asset =>
+      asset.startsWith('\'') || asset.startsWith('"')
+        ? asset.slice(1, -1)
+        : asset,
+    )
 
     const importerDir = id.endsWith('/') ? id : path.dirname(id)
-    return Array.from(new Set(assets.map(asset => path.resolve(importerDir, asset))))
+    return Array.from(new Set(pureAssets.map(asset => path.resolve(importerDir, asset))))
   }
 
   return {
