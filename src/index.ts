@@ -6,7 +6,7 @@ import { type Plugin, type ResolvedConfig, createFilter, preprocessCSS } from 'v
 import { type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
 import { checkFormats, getAssetContent, getCaptured, getFileBase64 } from './utils'
-import { CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE } from './constants'
+import { CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE, importCssRE } from './constants'
 
 type LoaderContext = Parameters<typeof interpolateName>[0]
 
@@ -79,9 +79,12 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     if (!content)
       return []
 
-    const result = await preprocessCSS(content.toString(), id, viteConfig)
+    let source = content.toString()
+    if (importCssRE.test(source)) {
+      const result = await preprocessCSS(source, id, viteConfig)
+      source = result.code
+    }
 
-    const source = result.code
     const cssUrlAssets = getCaptured(source, cssUrlRE)
     const cssImageSetAssets = getCaptured(source, cssImageSetRE)
     const assets = [...cssUrlAssets, ...cssImageSetAssets]
