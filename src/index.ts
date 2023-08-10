@@ -176,20 +176,50 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         return `export default '${publicDir}${assetPath}'`
       }
     },
-    async writeBundle(_, outputBundle) {
-      const assets = base64AssetsPathMap.entries()
+    async writeBundle(options, outputBundle) {
+      const assetsInStyle = base64AssetsPathMap.entries()
       Object.keys(outputBundle)
         .filter(name => path.extname(name) === '.css')
         .forEach(async (name) => {
           const bundle = outputBundle[name]
-          const isBundleAsset = 'source' in bundle
-          let source = isBundleAsset ? String(bundle.source) : bundle.code
-          Array.from(assets).forEach(([base64, asset]) => {
+          let source = 'source' in bundle ? String(bundle.source) : bundle.code
+          Array.from(assetsInStyle).forEach(([base64, asset]) => {
             source = source.replaceAll(base64, `./${asset}`)
+            // write back for subsequent process
+            'source' in bundle
+              ? (bundle.source = source)
+              : (bundle.code = source)
           })
 
           const outputPath = path.join(process.cwd(), outDir, name)
           await promisify(fs.writeFile)(outputPath, source)
+        })
+
+      const bundleDir = options.dir || path.join(process.cwd(), outDir)
+      // extrated assets
+      const assets = Object.keys(outputBundle).filter(id => filter(id))
+      Object.keys(outputBundle)
+        .filter(
+          name =>
+            path.extname(name) === '.css' || path.extname(name) === '.js',
+        )
+        .forEach((name) => {
+          const bundle = outputBundle[name]
+          const isBundleAsset = 'source' in bundle
+          const source = isBundleAsset ? String(bundle.source) : bundle.code
+
+          const fullname = path.join(bundleDir, name)
+          const fileDir = path.dirname(fullname)
+          assets.forEach(async (asset) => {
+            const fullAsset = path.join(bundleDir, asset)
+            const relativeAsset = path.relative(fileDir, fullAsset)
+            const originalAsset = `./${asset}`
+            if (asset !== relativeAsset && source.includes(originalAsset)) {
+              // Modify the address of the extraced resource based on the output path of the importer
+              const updated = source.replaceAll(originalAsset, relativeAsset)
+              await promisify(fs.writeFile)(fullname, updated)
+            }
+          })
         })
     },
   }
