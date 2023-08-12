@@ -6,7 +6,7 @@ import { type Plugin, type ResolvedConfig, createFilter, preprocessCSS } from 'v
 import { type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
 import { checkFormats, getAssetContent, getCaptured, getFileBase64 } from './utils'
-import { CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE, importCssRE } from './constants'
+import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE, importCssRE } from './constants'
 
 type LoaderContext = Parameters<typeof interpolateName>[0]
 
@@ -44,6 +44,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
 
   const filter = createFilter(include, exclude)
   const cssLangFilter = createFilter(CSS_LANGS_RE)
+  const assetsImporterFilter = createFilter(ASSETS_IMPORTER_RE)
   const assetsPathMap = new Map<string, string>()
   const base64AssetsPathMap = new Map<string, string>()
   const emitFile = (context: PluginContext, id: string, content: Buffer): string => {
@@ -96,6 +97,53 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
 
     const importerDir = id.endsWith('/') ? id : path.dirname(id)
     return Array.from(new Set(pureAssets.map(asset => path.resolve(importerDir, asset))))
+  }
+
+  // replace base64 back to assets path
+  const processAssetsInStyle = (
+    bundleSourceMap: Record<string, string>,
+  ): Record<string, string> => {
+    const updatedSourceMap = { ...bundleSourceMap }
+    const assetsInStyle = base64AssetsPathMap.entries()
+    Object.keys(updatedSourceMap)
+      .filter(name => path.extname(name) === '.css')
+      .forEach((name) => {
+        let updated = updatedSourceMap[name]
+        Array.from(assetsInStyle).forEach(([base64, asset]) => {
+          updated = updated.replaceAll(base64, `./${asset}`)
+        })
+
+        if (updatedSourceMap[name] !== updated)
+          updatedSourceMap[name] = updated
+      })
+
+    return updatedSourceMap
+  }
+
+  // Modify the extraced resource address based on the output path of the importer
+  const processAssetsInImporters = (
+    bundleSourceMap: Record<string, string>,
+  ): Record<string, string> => {
+    const updatedSourceMap = { ...bundleSourceMap }
+    const assetsExtracted = Object.keys(updatedSourceMap).filter(id => filter(id))
+    Object.keys(updatedSourceMap)
+      .filter(name => assetsImporterFilter(name))
+      .forEach((name) => {
+        let updated = updatedSourceMap[name]
+
+        const fileDir = path.dirname(name)
+        assetsExtracted.forEach(async (asset) => {
+          const relativeAsset = path.relative(fileDir, asset)
+          const originalAsset = `./${asset}`
+          if (asset !== relativeAsset && updated.includes(originalAsset))
+            updated = updated.replaceAll(originalAsset, relativeAsset)
+        })
+
+        if (updatedSourceMap[name] !== updated)
+          updatedSourceMap[name] = updated
+      })
+
+    return updatedSourceMap
   }
 
   return {
@@ -176,50 +224,23 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         return `export default '${publicDir}${assetPath}'`
       }
     },
-    async writeBundle(options, outputBundle) {
-      const assetsInStyle = base64AssetsPathMap.entries()
-      Object.keys(outputBundle)
-        .filter(name => path.extname(name) === '.css')
+    async writeBundle(_, outputBundle) {
+      const bundleSourceMap = Object.keys(outputBundle).reduce((map, name) => {
+        const bundle = outputBundle[name]
+        const source = 'source' in bundle ? String(bundle.source) : bundle.code
+        map[name] = source
+        return map
+      }, {} as Record<string, string>)
+
+      const updatedSourceMap = processAssetsInStyle(bundleSourceMap)
+      const processedSourceMap = processAssetsInImporters(updatedSourceMap)
+
+      const outputDir = path.join(process.cwd(), outDir)
+      Object.keys(bundleSourceMap)
+        .filter(name => bundleSourceMap[name] !== processedSourceMap[name])
         .forEach(async (name) => {
-          const bundle = outputBundle[name]
-          let source = 'source' in bundle ? String(bundle.source) : bundle.code
-          Array.from(assetsInStyle).forEach(([base64, asset]) => {
-            source = source.replaceAll(base64, `./${asset}`)
-            // write back for subsequent process
-            'source' in bundle
-              ? (bundle.source = source)
-              : (bundle.code = source)
-          })
-
-          const outputPath = path.join(process.cwd(), outDir, name)
-          await promisify(fs.writeFile)(outputPath, source)
-        })
-
-      const bundleDir = options.dir || path.join(process.cwd(), outDir)
-      // extrated assets
-      const assets = Object.keys(outputBundle).filter(id => filter(id))
-      Object.keys(outputBundle)
-        .filter(
-          name =>
-            path.extname(name) === '.css' || path.extname(name) === '.js',
-        )
-        .forEach((name) => {
-          const bundle = outputBundle[name]
-          const isBundleAsset = 'source' in bundle
-          const source = isBundleAsset ? String(bundle.source) : bundle.code
-
-          const fullname = path.join(bundleDir, name)
-          const fileDir = path.dirname(fullname)
-          assets.forEach(async (asset) => {
-            const fullAsset = path.join(bundleDir, asset)
-            const relativeAsset = path.relative(fileDir, fullAsset)
-            const originalAsset = `./${asset}`
-            if (asset !== relativeAsset && source.includes(originalAsset)) {
-              // Modify the address of the extraced resource based on the output path of the importer
-              const updated = source.replaceAll(originalAsset, relativeAsset)
-              await promisify(fs.writeFile)(fullname, updated)
-            }
-          })
+          const outputPath = path.join(outputDir, name)
+          await promisify(fs.writeFile)(outputPath, processedSourceMap[name])
         })
     },
   }
