@@ -96,7 +96,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     )
 
     const importerDir = id.endsWith(path.sep) ? id : path.dirname(id)
-    return Array.from(new Set(pureAssets.map(asset => path.posix.join(importerDir, asset))))
+    return Array.from(new Set(pureAssets.map(asset => path.resolve(importerDir, asset))))
   }
 
   // replace base64 back to assets path
