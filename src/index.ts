@@ -219,8 +219,10 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         return null
 
       const assetPath = assetsPathMap.get(id)
-      if (assetPath)
-        return `export default '${path.posix.join(publicUrl, assetPath)}'`
+      if (assetPath) {
+        const publicDir = publicUrl.endsWith('/') ? publicUrl : `${publicUrl}/`
+        return `export default '${publicDir}${assetPath}'`
+      }
     },
     async writeBundle(_, outputBundle) {
       const bundleSourceMap = Object.keys(outputBundle).reduce((map, name) => {
