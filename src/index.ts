@@ -37,6 +37,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     regExp,
     publicUrl = '',
   } = options
+  const publicDir = publicUrl.endsWith('/') ? publicUrl : `${publicUrl}/`
   let isLibBuild = false
   let assetsDir: string
   let outDir: string
@@ -113,7 +114,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       .forEach((name) => {
         let updated = updatedSourceMap[name]
         Array.from(assetsInStyle).forEach(([base64, asset]) => {
-          updated = updated.replaceAll(base64, `./${asset}`)
+          updated = updated.replaceAll(base64, publicUrl ? asset : `./${asset}`)
         })
 
         if (updatedSourceMap[name] !== updated)
@@ -187,8 +188,10 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
           .filter(({ content }) => limit && content ? content.byteLength < limit : true)
 
         validAssets.forEach(({ id, content }) => {
-          const assetPath = emitFile(this, id, content!)
+          let assetPath = emitFile(this, id, content!)
           const base64 = getFileBase64(id, content!)
+          if (publicUrl)
+            assetPath = `${publicDir}${assetPath}`
           base64AssetsPathMap.set(base64, assetPath)
         })
       }
@@ -222,10 +225,8 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         return null
 
       const assetPath = assetsPathMap.get(id)
-      if (assetPath) {
-        const publicDir = publicUrl.endsWith('/') ? publicUrl : `${publicUrl}/`
+      if (assetPath)
         return `export default '${publicDir}${assetPath}'`
-      }
     },
     async writeBundle(_, outputBundle) {
       const bundleSourceMap = Object.keys(outputBundle).reduce((map, name) => {
