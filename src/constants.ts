@@ -52,6 +52,4 @@ export const cssUrlRE = /(?<=^|[^\w\-\u0080-\uFFFF])url\((\s*('[^']+'|"[^"]+")\s
 // Assuming a function name won't be longer than 256 chars
 export const cssImageSetRE = /(?<=image-set\()((?:[\w\-]{1,256}\([^)]*\)|[^)])*)(?=\))/
 
-export const importCssRE = /@import ('[^']+\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss)'|"[^"]+\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss)"|[^'")]+\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss))/
-
 export const ASSETS_IMPORTER_RE = /\.(css|js|cjs|mjs)(?:$|\?)/
