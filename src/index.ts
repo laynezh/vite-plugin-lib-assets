@@ -2,13 +2,14 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import type { Buffer } from 'node:buffer'
-import { type Plugin, type ResolvedConfig, createFilter, preprocessCSS } from 'vite'
+import { type Alias, type Plugin, type ResolvedConfig, createFilter, preprocessCSS } from 'vite'
 import { type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
 import { checkFormats, getAssetContent, getCaptured, getFileBase64 } from './utils'
 import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE } from './constants'
 import { resolveCompiler } from './compiler'
 import { getDescriptor } from './descriptorCache'
+import { resolve } from './alias'
 import type { DescriptorOptions } from './types'
 
 type LoaderContext = Parameters<typeof interpolateName>[0]
@@ -44,6 +45,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   let isLibBuild = false
   let assetsDir: string
   let outDir: string
+  let alias: Alias[] = []
   let viteConfig: ResolvedConfig
   const descriptorOptions: DescriptorOptions = {
     compiler: null as any, // to be set in buildStart
@@ -83,7 +85,11 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     return assetPath
   }
 
-  const extractFromSource = async (id: string, content: string): Promise<string[]> => {
+  const extractFromSource = async (
+    context: PluginContext,
+    id: string,
+    content: string,
+  ): Promise<string[]> => {
     let source = content
     try {
       const result = await preprocessCSS(content, id, viteConfig)
@@ -102,11 +108,10 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         : asset,
     )
 
-    const importerDir = id.endsWith(path.sep) ? id : path.dirname(id)
-    return Array.from(new Set(pureAssets.map(asset => path.resolve(importerDir, asset))))
+    return resolve(context, alias, Array.from(new Set(pureAssets)), id)
   }
 
-  const extractFromFile = async (id: string): Promise<string[]> => {
+  const extractFromFile = async (context: PluginContext, id: string): Promise<string[]> => {
     const content = getAssetContent(id)
     if (!content)
       return []
@@ -120,14 +125,14 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
 
       const extractedAssetList = await Promise.all(
         descriptor.styles.map(style =>
-          extractFromSource(id, style.content),
+          extractFromSource(context, id, style.content),
         ),
       )
 
       return extractedAssetList.flatMap(extractedAssets => extractedAssets)
     }
 
-    return extractFromSource(id, content.toString())
+    return extractFromSource(context, id, content.toString())
   }
 
   // replace base64 back to assets path
@@ -187,10 +192,11 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     },
     configResolved(config) {
       viteConfig = config
-      const { build } = config
+      const { build, resolve } = config
       isLibBuild = build.lib !== false
       assetsDir = build.assetsDir
       outDir = build.outDir
+      alias = resolve.alias
       if (build.lib !== false) {
         const { formats = ['es', 'umd'] } = build.lib
         const valid = checkFormats(formats)
@@ -212,7 +218,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       const id = path.resolve(importerDir, source)
 
       if (cssLangFilter(id)) {
-        const assetsFromCss = await extractFromFile(id)
+        const assetsFromCss = await extractFromFile(this, id)
 
         const validAssets = assetsFromCss
           .filter(id => filter(id))
