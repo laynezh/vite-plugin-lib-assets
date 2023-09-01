@@ -4,6 +4,11 @@ import Inspect from 'vite-plugin-inspect'
 import libAssets from '../src/'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': './src',
+    },
+  },
   build: {
     lib: {
       name: 'main',
