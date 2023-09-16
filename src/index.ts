@@ -119,6 +119,9 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     const [pureId] = id.split('?', 2)
 
     if (path.extname(pureId) === '.vue') {
+      if (!descriptorOptions.compiler)
+        descriptorOptions.compiler = resolveCompiler(descriptorOptions.root)
+
       const descriptor = getDescriptor(pureId, descriptorOptions)
       if (descriptor === undefined)
         return []
@@ -186,10 +189,6 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     name: 'vite-plugin-lib-assets',
     apply: 'build',
     enforce: 'pre',
-    buildStart() {
-      descriptorOptions.compiler
-        = descriptorOptions.compiler || resolveCompiler(descriptorOptions.root)
-    },
     configResolved(config) {
       viteConfig = config
       const { build, resolve } = config
