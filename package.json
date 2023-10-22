@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.5.6-beta.0",
   "packageManager": "pnpm@8.6.0",
-  "description": "Vite 插件：用于提取 lib 构建模式下引用到的资源文件，而不是以 base64 形式内联它们",
+  "description": "A Vite Plugin extracts resource files referenced in library mode instead of embedded them as base64.",
   "license": "MIT",
   "homepage": "https://github.com/laynezh/vite-plugin-lib-assets#readme",
   "repository": {
