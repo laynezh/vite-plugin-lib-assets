@@ -108,7 +108,11 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         : asset,
     )
 
-    return resolve(context, alias, Array.from(new Set(pureAssets)), id)
+    // skip format in base64 or XML.
+    // Due to aliases, this is not possible to determined by the asset path is relative or absolute.
+    const concernedAssets = pureAssets.filter(asset => !asset.startsWith('data:'))
+
+    return resolve(context, alias, Array.from(new Set(concernedAssets)), id)
   }
 
   const extractFromFile = async (context: PluginContext, id: string): Promise<string[]> => {
