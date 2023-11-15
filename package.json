@@ -57,8 +57,7 @@
   },
   "dependencies": {
     "loader-utils": "^3.2.1",
-    "mrmime": "^1.0.1",
-    "string.prototype.replaceall": "^1.0.8"
+    "mrmime": "^1.0.1"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^0.39.5",
