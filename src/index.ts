@@ -280,7 +280,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       const updatedSourceMap = processAssetsInStyle(bundleSourceMap)
       const processedSourceMap = processAssetsInImporters(updatedSourceMap)
 
-      const outputDir = path.posix.join(process.cwd(), outDir)
+      const outputDir = path.isAbsolute(outDir) ? outDir : path.posix.join(process.cwd(), outDir)
       Object.keys(bundleSourceMap)
         .filter(name => bundleSourceMap[name] !== processedSourceMap[name])
         .forEach(async (name) => {
