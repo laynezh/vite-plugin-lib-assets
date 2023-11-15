@@ -76,7 +76,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       : path.posix.join(outputDir, url)
 
     const filename = assetPath.replace(`?${resourceQuery}`, '')
-    const fullname = path.join(process.cwd(), outDir, assetPath)
+    const fullname = path.join(path.isAbsolute(outDir) ? process.cwd() : '', outDir, assetPath)
 
     context.emitFile({
       fileName: filename,
