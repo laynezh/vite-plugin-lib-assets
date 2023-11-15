@@ -5,6 +5,9 @@ import type { Buffer } from 'node:buffer'
 import { type Alias, type Plugin, type ResolvedConfig, createFilter, preprocessCSS } from 'vite'
 import { type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
+
+// @ts-expect-error string.prototype.replaceall has no typescript declaration
+import replaceAll from 'string.prototype.replaceall'
 import { checkFormats, getAssetContent, getCaptured, getFileBase64 } from './utils'
 import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE } from './constants'
 import { resolveCompiler } from './compiler'
@@ -153,7 +156,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       .forEach((name) => {
         let updated = updatedSourceMap[name]
         Array.from(assetsInStyle).forEach(([base64, asset]) => {
-          updated = updated.replaceAll(base64, publicUrl ? asset : `./${asset}`)
+          updated = replaceAll(updated, base64, publicUrl ? asset : `./${asset}`)
         })
 
         if (updatedSourceMap[name] !== updated)
@@ -179,7 +182,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
           const relativeAsset = path.posix.relative(fileDir, asset)
           const originalAsset = `./${asset}`
           if (asset !== relativeAsset && updated.includes(originalAsset))
-            updated = updated.replaceAll(originalAsset, relativeAsset)
+            updated = replaceAll(updated, originalAsset, relativeAsset)
         })
 
         if (updatedSourceMap[name] !== updated)
