@@ -226,7 +226,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         const validAssets = assetsFromCss
           .filter(id => filter(id))
           .map(id => ({ id, content: getAssetContent(id) }))
-          .filter(({ content }) => limit && content ? content.byteLength < limit : true)
+          .filter(({ content }) => limit && content ? content.byteLength > limit : true)
 
         validAssets.forEach(({ id, content }) => {
           let assetPath = emitFile(this, id, content!)
