@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { promisify } from 'node:util'
 import type { Buffer } from 'node:buffer'
 import { type Alias, type Plugin, type ResolvedConfig, createFilter, preprocessCSS } from 'vite'
 import { type PluginContext } from 'rollup'
@@ -270,9 +269,10 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         return `export default '${publicDir}${assetPath}'`
     },
     async writeBundle(_, outputBundle) {
+      const outputDir = path.isAbsolute(outDir) ? outDir : path.posix.join(process.cwd(), outDir)
       const bundleSourceMap = Object.keys(outputBundle).reduce((map, name) => {
-        const bundle = outputBundle[name]
-        const source = 'source' in bundle ? String(bundle.source) : bundle.code
+        const filePath = path.posix.join(outputDir, name)
+        const source = fs.readFileSync(filePath, 'utf8')
         map[name] = source
         return map
       }, {} as Record<string, string>)
@@ -280,12 +280,11 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       const updatedSourceMap = processAssetsInStyle(bundleSourceMap)
       const processedSourceMap = processAssetsInImporters(updatedSourceMap)
 
-      const outputDir = path.isAbsolute(outDir) ? outDir : path.posix.join(process.cwd(), outDir)
       Object.keys(bundleSourceMap)
         .filter(name => bundleSourceMap[name] !== processedSourceMap[name])
-        .forEach(async (name) => {
+        .forEach((name) => {
           const outputPath = path.posix.join(outputDir, name)
-          await promisify(fs.writeFile)(outputPath, processedSourceMap[name])
+          fs.writeFileSync(outputPath, processedSourceMap[name])
         })
     },
   }
