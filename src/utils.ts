@@ -58,3 +58,14 @@ export function getCaptured(input: string, re: RegExp): string[] {
 
   return captures
 }
+
+/**
+ * A simplified version of `String.replaceAll` to address compatibility issues on Node 14
+ */
+export function replaceAll(source: string, searchValue: string, replaceValue: string): string {
+  let result = source
+  while (result.indexOf(searchValue) > 0)
+    result = result.replace(searchValue, replaceValue)
+
+  return result
+}
