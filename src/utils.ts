@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import type { Buffer } from 'node:buffer'
 import type { LibraryFormats } from 'vite'
 import * as mrmime from 'mrmime'
+import escapeStringRegexp from 'escape-string-regexp'
 
 type IntermidiateFormats = Array<'es' | 'cjs'>
 type FinalFormats = Array<'umd' | 'iife'>
@@ -63,9 +64,7 @@ export function getCaptured(input: string, re: RegExp): string[] {
  * A simplified version of `String.replaceAll` to address compatibility issues on Node 14
  */
 export function replaceAll(source: string, searchValue: string, replaceValue: string): string {
-  let result = source
-  while (result.indexOf(searchValue) > 0)
-    result = result.replace(searchValue, replaceValue)
-
-  return result
+  const escaped = escapeStringRegexp(searchValue)
+  const replaceRegExp = new RegExp(escaped, 'g')
+  return source.replace(replaceRegExp, replaceValue)
 }
