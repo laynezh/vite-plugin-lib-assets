@@ -56,6 +56,7 @@
     "access": "public"
   },
   "dependencies": {
+    "escape-string-regexp": "^4.0.0",
     "loader-utils": "^3.2.1",
     "mrmime": "^1.0.1"
   },
