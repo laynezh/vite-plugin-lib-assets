@@ -54,6 +54,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   const filter = createFilter(include, exclude)
   const cssLangFilter = createFilter(CSS_LANGS_RE)
   const assetsImporterFilter = createFilter(ASSETS_IMPORTER_RE)
+  const assetCache = new WeakMap<ResolvedConfig, Set<string>>()
   const assetsPathMap = new Map<string, string>()
   const base64AssetsPathMap = new Map<string, string>()
   const emitFile = (context: PluginContext, id: string, content: Buffer): string => {
@@ -74,12 +75,16 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     const filename = assetPath.replace(`?${resourceQuery}`, '')
     const fullname = path.join(path.isAbsolute(outDir) ? process.cwd() : '', outDir, assetPath)
 
-    context.emitFile({
-      fileName: filename,
-      name: fullname,
-      source: content,
-      type: 'asset',
-    })
+    const cache = assetCache.get(viteConfig)!
+    if (!cache.has(filename)) {
+      context.emitFile({
+        fileName: filename,
+        name: fullname,
+        source: content,
+        type: 'asset',
+      })
+      cache.add(filename)
+    }
 
     return assetPath
   }
@@ -194,6 +199,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     enforce: 'pre',
     configResolved(config) {
       viteConfig = config
+      assetCache.set(config, new Set())
       const { build, resolve } = config
       isLibBuild = build.lib !== false
       assetsDir = build.assetsDir
