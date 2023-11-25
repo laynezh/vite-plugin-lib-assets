@@ -4,6 +4,10 @@ import type { LibraryFormats } from 'vite'
 import * as mrmime from 'mrmime'
 import escapeStringRegexp from 'escape-string-regexp'
 
+export function isObject(value: unknown): value is Record<string, any> {
+  return Object.prototype.toString.call(value) === '[object Object]'
+}
+
 type IntermidiateFormats = Array<'es' | 'cjs'>
 type FinalFormats = Array<'umd' | 'iife'>
 
