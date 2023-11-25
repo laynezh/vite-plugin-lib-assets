@@ -10,6 +10,7 @@ import { resolveCompiler } from './compiler'
 import { getDescriptor } from './descriptorCache'
 import { resolve } from './alias'
 import type { DescriptorOptions } from './types'
+import { processStyle } from './processStyle'
 
 type LoaderContext = Parameters<typeof interpolateName>[0]
 
@@ -96,8 +97,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   ): Promise<string[]> => {
     let source = content
     try {
-      const result = await preprocessCSS(content, id, viteConfig)
-      source = result.code
+      source = await processStyle(id, content, viteConfig)
     }
     catch (err) {
       console.warn(`[vite-plugin-lib-assets]: failed to preprocessCSS ${err}`)
