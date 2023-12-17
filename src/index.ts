@@ -169,7 +169,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     return updatedSourceMap
   }
 
-  // Modify the extraced resource address based on the output path of the importer
+  // Modify the extracted resource address based on the output path of the importer
   const processAssetsInImporters = (
     bundleSourceMap: Record<string, string>,
   ): Record<string, string> => {
@@ -182,7 +182,8 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
 
         const fileDir = path.dirname(name)
         assetsExtracted.forEach(async (asset) => {
-          const relativeAsset = path.posix.relative(fileDir, asset)
+          const relativePath = path.posix.relative(fileDir, asset)
+          const relativeAsset = relativePath.startsWith('.') ? relativePath : `./${relativePath}`
           const originalAsset = `./${asset}`
           if (asset !== relativeAsset && updated.includes(originalAsset))
             updated = replaceAll(updated, originalAsset, relativeAsset)
