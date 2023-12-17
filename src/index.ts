@@ -115,7 +115,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     // skip format in base64, XML or http.
     // Due to aliases, this is not possible to determined by the asset path is relative or absolute.
     const concernedAssets = pureAssets.filter(
-      asset => !asset.startsWith('data:') && !/^https?:\/\//.test(asset),
+      asset => !asset.startsWith('data:') && !/^(?:https?:)?\/\//.test(asset),
     )
 
     return resolve(context, alias, Array.from(new Set(concernedAssets)), id)

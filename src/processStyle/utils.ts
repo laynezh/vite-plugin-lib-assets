@@ -14,7 +14,7 @@ export function getAssetsInStyle(source: string): string[] {
   // skip format in base64, XML or http.
   // Due to aliases, this is not possible to determined by the asset path is relative or absolute.
   const concernedAssets = pureAssets.filter(
-    asset => !asset.startsWith('data:') && !/^https?:\/\//.test(asset),
+    asset => !asset.startsWith('data:') && !/^(?:https?:)?\/\//.test(asset),
   )
 
   return concernedAssets
