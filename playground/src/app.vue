@@ -17,9 +17,3 @@ const handleMinus = () => count.value -= 1
     </button>
   </div>
 </template>
-
-<style scoped>
-.container {
-  background-image: url(./assets/vite-logo-vue-css.svg);
-}
-</style>
