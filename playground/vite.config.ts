@@ -9,16 +9,20 @@ export default defineConfig({
       '@': './src',
     },
   },
+  css: {
+    // transformer: 'lightningcss',
+  },
   build: {
     lib: {
       name: 'main',
       entry: {
         main: './src/main.ts',
-        mainCss: './src/main.css',
+        // mainCss: './src/main.css',
       },
       fileName: 'main',
       formats: ['es'],
     },
+    // sourcemap: true,
     minify: false,
     rollupOptions: {
       external: ['vue'],

@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { Buffer } from 'node:buffer'
-import { type Alias, type Plugin, type ResolvedConfig, createFilter, preprocessCSS } from 'vite'
+import { type Alias, type Plugin, type ResolvedConfig, createFilter } from 'vite'
 import { type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
 import { checkFormats, getAssetContent, getCaptured, getFileBase64, replaceAll } from './utils'

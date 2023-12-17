@@ -1,0 +1,5 @@
+@import '../local-imported.css';
+
+.themes-red {
+  background: url(../assets/vite-logo-css.svg) no-repeat left top / cover;
+}
