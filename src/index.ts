@@ -185,8 +185,17 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
           const relativePath = path.posix.relative(fileDir, asset)
           const relativeAsset = relativePath.startsWith('.') ? relativePath : `./${relativePath}`
           const originalAsset = `./${asset}`
-          if (asset !== relativeAsset && updated.includes(originalAsset))
-            updated = replaceAll(updated, originalAsset, relativeAsset)
+          if (asset !== relativeAsset && updated.includes(originalAsset)) {
+            /**
+             * The use of single quotes, double quotes, and parentheses here is to prevent the disruption
+             * of resource A when replacing resource B, whose address is a subset of the resource A's address.
+             * For example, the ../fonts/FiraCode-Regular.woff2 and ../fonts/FiraCode-Regular.woff in the issue#58.
+             * @see https://github.com/laynezh/vite-plugin-lib-assets/issues/58
+             */
+            updated = replaceAll(updated, `'${originalAsset}'`, `'${relativeAsset}'`)
+            updated = replaceAll(updated, `"${originalAsset}"`, `"${relativeAsset}"`)
+            updated = replaceAll(updated, `(${originalAsset})`, `(${relativeAsset})`)
+          }
         })
 
         if (updatedSourceMap[name] !== updated)
