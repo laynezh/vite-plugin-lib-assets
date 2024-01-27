@@ -153,12 +153,11 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     bundleSourceMap: Record<string, string>,
   ): Record<string, string> => {
     const updatedSourceMap = { ...bundleSourceMap }
-    const assetsInStyle = base64AssetsPathMap.entries()
     Object.keys(updatedSourceMap)
       .filter(name => path.extname(name) === '.css')
       .forEach((name) => {
         let updated = updatedSourceMap[name]
-        Array.from(assetsInStyle).forEach(([base64, asset]) => {
+        base64AssetsPathMap.forEach((asset, base64) => {
           updated = replaceAll(updated, base64, publicUrl ? asset : `./${asset}`)
         })
 
