@@ -22,6 +22,7 @@ export default defineConfig({
       fileName: 'main',
       formats: ['es'],
     },
+    cssCodeSplit: true,
     // sourcemap: true,
     minify: false,
     rollupOptions: {
