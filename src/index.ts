@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { Buffer } from 'node:buffer'
 import { type Alias, type Plugin, type ResolvedConfig, createFilter } from 'vite'
-import { type PluginContext } from 'rollup'
+import { type EmittedFile, type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
 import { checkFormats, getAssetContent, getCaptured, getFileBase64, replaceAll } from './utils'
 import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE } from './constants'
@@ -55,7 +55,9 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   const filter = createFilter(include, exclude)
   const cssLangFilter = createFilter(CSS_LANGS_RE)
   const assetsImporterFilter = createFilter(ASSETS_IMPORTER_RE)
-  const assetCache = new WeakMap<ResolvedConfig, Set<string>>()
+  let transformSkipped = true
+  let emittedAssets: Map<string, EmittedFile>
+  const assetCache = new WeakMap<ResolvedConfig, Map<string, EmittedFile>>()
   const assetsPathMap = new Map<string, string>()
   const base64AssetsPathMap = new Map<string, string>()
   const emitFile = (context: PluginContext, id: string, content: Buffer): string => {
@@ -78,13 +80,14 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
 
     const cache = assetCache.get(viteConfig)!
     if (!cache.has(filename)) {
-      context.emitFile({
+      const emitted: EmittedFile = {
         fileName: filename,
         name: fullname,
         source: content,
         type: 'asset',
-      })
-      cache.add(filename)
+      }
+      context.emitFile(emitted)
+      cache.set(filename, emitted)
     }
 
     return assetPath
@@ -208,9 +211,30 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     name: 'vite-plugin-lib-assets',
     apply: 'build',
     enforce: 'pre',
+    buildEnd() {
+      /**
+       * Under watch mode:
+       * 1. Reset the cache of emitted files
+       * 2. Re-emit the files cached when re-build is triggered but the file remains unchanged
+       *    In this situation, Vite won't resolve assets and this plugin wont't emit them,
+       *    so they won't appear in the final output. We must trigger their emit manually.
+       */
+      if (transformSkipped)
+        emittedAssets.forEach(emitted => this.emitFile(emitted))
+      else
+        emittedAssets = assetCache.get(viteConfig) ?? new Map()
+      assetCache.set(viteConfig, new Map())
+    },
+    watchChange() {
+      transformSkipped = true
+    },
+    transform(code) {
+      transformSkipped = false
+      return code
+    },
     configResolved(config) {
       viteConfig = config
-      assetCache.set(config, new Set())
+      assetCache.set(config, new Map())
       const { build, resolve } = config
       isLibBuild = build.lib !== false
       assetsDir = build.assetsDir
