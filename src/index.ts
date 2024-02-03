@@ -301,7 +301,15 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         .filter(name => bundleSourceMap[name] !== processedSourceMap[name])
         .forEach((name) => {
           const outputPath = path.posix.join(outputDir, name)
-          fs.writeFileSync(outputPath, processedSourceMap[name])
+          const updated = processedSourceMap[name]
+          fs.writeFileSync(outputPath, updated)
+
+          // Write the updated source back for Vite's reporter to accurately output the file size
+          const bundle = outputBundle[name]
+          if (bundle.type === 'chunk')
+            bundle.code = updated
+          else if (name.endsWith('.css'))
+            bundle.source = updated
         })
     },
   }
