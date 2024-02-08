@@ -58,7 +58,8 @@
   "dependencies": {
     "escape-string-regexp": "^4.0.0",
     "loader-utils": "^3.2.1",
-    "mrmime": "^1.0.1"
+    "mrmime": "^1.0.1",
+    "semver": "^7.6.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^0.39.5",

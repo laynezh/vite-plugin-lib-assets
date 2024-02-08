@@ -1,8 +1,10 @@
 import fs from 'node:fs'
 import type { Buffer } from 'node:buffer'
-import type { LibraryFormats } from 'vite'
+import { type LibraryFormats, version } from 'vite'
+import { gte } from 'semver'
 import * as mrmime from 'mrmime'
 import escapeStringRegexp from 'escape-string-regexp'
+import { svgToDataURL } from './vitools'
 
 export function isObject(value: unknown): value is Record<string, any> {
   return Object.prototype.toString.call(value) === '[object Object]'
@@ -46,9 +48,18 @@ function cleanUrl(url: string): string {
 
 export function getFileBase64(id: string, content: Buffer): string {
   const file = cleanUrl(id)
-  const mimeType = mrmime.lookup(file) ?? 'application/octet-stream'
-  // base64 inlined as a string
-  return `data:${mimeType};base64,${content!.toString('base64')}`
+  /**
+   * Starting from version 5.0.0, Vite employs a new approach for converting SVG files into their base64 format.
+   * @see https://github.com/vitejs/vite/pull/14643
+   */
+  if (gte(version, '5.0.0') && file.endsWith('.svg')) {
+    return svgToDataURL(content)
+  }
+  else {
+    const mimeType = mrmime.lookup(file) ?? 'application/octet-stream'
+    // base64 inlined as a string
+    return `data:${mimeType};base64,${content.toString('base64')}`
+  }
 }
 
 export function getCaptured(input: string, re: RegExp): string[] {
