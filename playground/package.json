@@ -8,8 +8,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",
-    "lightningcss": "^1.22.1",
-    "vite": "^4.5.0",
-    "vite-plugin-inspect": "^0.7.28"
+    "lightningcss": "^1.23.0",
+    "vite": "^5.0.12",
+    "vite-plugin-inspect": "^0.8.3"
   }
 }
