@@ -4,6 +4,7 @@ import type { Buffer } from 'node:buffer'
 import { type Alias, type Plugin, type ResolvedConfig, createFilter } from 'vite'
 import { type EmittedFile, type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
+import MagicString from 'magic-string'
 import { checkFormats, getAssetContent, getCaptured, getFileBase64, replaceAll } from './utils'
 import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE } from './constants'
 import { resolveCompiler } from './compiler'
@@ -228,9 +229,9 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     watchChange() {
       transformSkipped = true
     },
-    transform(code) {
+    transform(code, id) {
       transformSkipped = false
-      return code
+      return { code, map: new MagicString(code).generateMap({ source: id }) }
     },
     configResolved(config) {
       viteConfig = config

@@ -22,6 +22,7 @@ export default defineConfig({
       fileName: 'main',
       formats: ['es'],
     },
+    sourcemap: true,
     cssCodeSplit: true,
     // sourcemap: true,
     minify: false,
