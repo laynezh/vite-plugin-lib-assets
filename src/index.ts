@@ -265,6 +265,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         const assetsFromCss = await extractFromFile(this, id)
 
         const validAssets = assetsFromCss
+          .map(aid => path.resolve(path.dirname(id), aid))
           .filter(id => filter(id))
           .map(id => ({ id, content: getAssetContent(id) }))
           .filter(({ content }) => limit && content ? content.byteLength > limit : true)
