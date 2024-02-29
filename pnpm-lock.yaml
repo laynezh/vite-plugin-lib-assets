@@ -14,9 +14,6 @@ importers:
       loader-utils:
         specifier: ^3.2.1
         version: 3.2.1
-      magic-string:
-        specifier: ^0.30.7
-        version: 0.30.7
       mrmime:
         specifier: ^1.0.1
         version: 1.0.1
@@ -3245,6 +3242,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
+    dev: true
 
   /mdast-util-from-markdown@0.8.5:
     resolution: {integrity: sha512-2hkTXtYYnr+NubD/g6KGBS/0mFmBcifAsI0yIWRiRo0PjVs6SSOSOdtzbp6kSGnShDN6G5aWZpKQ2lWRy27mWQ==}

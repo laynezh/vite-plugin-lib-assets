@@ -58,7 +58,6 @@
   "dependencies": {
     "escape-string-regexp": "^4.0.0",
     "loader-utils": "^3.2.1",
-    "magic-string": "^0.30.7",
     "mrmime": "^1.0.1",
     "semver": "^7.6.0"
   },
