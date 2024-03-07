@@ -4,7 +4,7 @@ import type { Buffer } from 'node:buffer'
 import { type Alias, type Plugin, type ResolvedConfig, createFilter } from 'vite'
 import { type EmittedFile, type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
-import { checkFormats, getAssetContent, getCaptured, getFileBase64, replaceAll } from './utils'
+import { checkFormats, getAssetContent, getCaptured, getFileBase64, registerCustomMime, replaceAll } from './utils'
 import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE } from './constants'
 import { resolveCompiler } from './compiler'
 import { getDescriptor } from './descriptorCache'
@@ -32,6 +32,8 @@ export interface Options {
 }
 
 export default function VitePluginLibAssets(options: Options = {}): Plugin {
+  registerCustomMime()
+
   const {
     include = DEFAULT_ASSETS_RE,
     exclude,
