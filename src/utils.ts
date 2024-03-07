@@ -46,6 +46,19 @@ function cleanUrl(url: string): string {
   return url.replace(postfixRE, '')
 }
 
+// add own dictionary entry by directly assigning mrmime
+export function registerCustomMime(): void {
+  // https://github.com/lukeed/mrmime/issues/3
+  // eslint-disable-next-line dot-notation
+  mrmime.mimes['ico'] = 'image/x-icon'
+  // https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Containers#flac
+  // eslint-disable-next-line dot-notation
+  mrmime.mimes['flac'] = 'audio/flac'
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+  // eslint-disable-next-line dot-notation
+  mrmime.mimes['eot'] = 'application/vnd.ms-fontobject'
+}
+
 export function getFileBase64(id: string, content: Buffer): string {
   const file = cleanUrl(id)
   /**
