@@ -253,11 +253,12 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       if (!isLibBuild)
         return null
 
-      const importerDir = importer.endsWith(path.sep)
-        ? importer
-        : path.dirname(importer)
+      const resolved = await this.resolve(source, importer)
+      if (resolved === null)
+        return null
+
       // Full path of the imported file
-      const id = path.resolve(importerDir, source)
+      const { id } = resolved
 
       if (cssLangFilter(id)) {
         const assetsFromCss = await extractFromFile(this, id)
