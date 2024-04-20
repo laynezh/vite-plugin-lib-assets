@@ -37,6 +37,10 @@ export default defineConfig({
 
 Example: [`playground/`](./playground/)
 
+### Hints
+
+- If `build.ssr` is set to `true`, you might want to enable `build.ssrEmitAssets`, so assets are emitted.
+
 ## Option
 
 ```typescript
