@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { Buffer } from 'node:buffer'
 import { type Alias, type Plugin, type ResolvedConfig, createFilter } from 'vite'
-import { type EmittedFile, type PluginContext } from 'rollup'
+import { type EmittedAsset, type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
 import { checkFormats, getAssetContent, getCaptured, getFileBase64, registerCustomMime, replaceAll } from './utils'
 import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE } from './constants'
@@ -45,6 +45,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   } = options
   const publicDir = publicUrl.endsWith('/') ? publicUrl : `${publicUrl}/`
   let isLibBuild = false
+  let isBuildWatch = false
   let assetsDir: string
   let outDir: string
   let alias: Alias[] = []
@@ -57,9 +58,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   const filter = createFilter(include, exclude)
   const cssLangFilter = createFilter(CSS_LANGS_RE)
   const assetsImporterFilter = createFilter(ASSETS_IMPORTER_RE)
-  let transformSkipped = true
-  let emittedAssets: Map<string, EmittedFile>
-  const assetCache = new WeakMap<ResolvedConfig, Map<string, EmittedFile>>()
+  const assetCache = new Map<string, EmittedAsset>()
   const assetsPathMap = new Map<string, string>()
   const base64AssetsPathMap = new Map<string, string>()
   const emitFile = (context: PluginContext, id: string, content: Buffer): string => {
@@ -80,17 +79,19 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     const filename = assetPath.replace(`?${resourceQuery}`, '')
     const fullname = path.join(path.isAbsolute(outDir) ? process.cwd() : '', outDir, assetPath)
 
-    const cache = assetCache.get(viteConfig)!
-    if (!cache.has(filename)) {
-      const emitted: EmittedFile = {
-        fileName: filename,
-        name: fullname,
-        source: content,
-        type: 'asset',
-      }
-      context.emitFile(emitted)
-      cache.set(filename, emitted)
+    const emitted: EmittedAsset = {
+      fileName: filename,
+      name: fullname,
+      source: content,
+      type: 'asset',
     }
+    context.emitFile(emitted)
+    /**
+     * Cache all emitted asset files in watch mode.
+     * Use the filename as cache keys, and support updating the cache with later emitted assets.
+     */
+    if (isBuildWatch)
+      assetCache.set(filename, emitted)
 
     return assetPath
   }
@@ -211,29 +212,9 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     name: 'vite-plugin-lib-assets',
     apply: 'build',
     enforce: 'pre',
-    buildEnd() {
-      /**
-       * Under watch mode:
-       * 1. Reset the cache of emitted files
-       * 2. Re-emit the files cached when re-build is triggered but the file remains unchanged
-       *    In this situation, Vite won't resolve assets and this plugin wont't emit them,
-       *    so they won't appear in the final output. We must trigger their emit manually.
-       */
-      if (transformSkipped)
-        emittedAssets.forEach(emitted => this.emitFile(emitted))
-      else
-        emittedAssets = assetCache.get(viteConfig) ?? new Map()
-      assetCache.set(viteConfig, new Map())
-    },
-    watchChange() {
-      transformSkipped = true
-    },
-    transform() {
-      transformSkipped = false
-    },
     configResolved(config) {
       viteConfig = config
-      assetCache.set(config, new Map())
+      isBuildWatch = !!config.build.watch
       const { build, resolve } = config
       isLibBuild = build.lib !== false
       assetsDir = build.assetsDir
@@ -335,6 +316,17 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
           else if (name.endsWith('.css'))
             bundle.source = updated
         })
+
+      /**
+       * Under watch mode, Vite won't resolve assets and this plugin wont't emit them,
+       * so they won't appear in the final output. We must trigger their emit manually.
+       */
+      if (isBuildWatch) {
+        assetCache.forEach(({ fileName, source }) => {
+          if (fileName && source && !outputBundle[fileName])
+            fs.writeFileSync(path.posix.join(outputDir, fileName), source)
+        })
+      }
     },
   }
 }
