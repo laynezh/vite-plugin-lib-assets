@@ -37,6 +37,10 @@ export default defineConfig({
 
 Example: [`playground/`](./playground/)
 
+### 注意
+
+- 如果将 `build.ssr` 设置为 `true`，你应该同时开启 `build.ssrEmitAssets` 来输出资源文件。
+
 ## 配置项
 
 ```typescript
