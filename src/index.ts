@@ -43,6 +43,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     regExp,
     publicUrl = '',
   } = options
+  const pluginName = 'vite-plugin-lib-assets'
   const publicDir = publicUrl.endsWith('/') ? publicUrl : `${publicUrl}/`
   let isLibBuild = false
   let isBuildWatch = false
@@ -209,7 +210,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   }
 
   return {
-    name: 'vite-plugin-lib-assets',
+    name: pluginName,
     apply: 'build',
     enforce: 'pre',
     configResolved(config) {
@@ -230,15 +231,29 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         }
       }
     },
-    async resolveId(source, importer = '') {
+    async resolveId(source, importer = '', opts) {
       if (!isLibBuild)
         return null
 
-      const importerDir = importer.endsWith(path.sep)
-        ? importer
-        : path.dirname(importer)
-      // Full path of the imported file
-      const id = path.resolve(importerDir, source)
+      // skip resolves triggered by plugin self
+      if (opts.custom?.[pluginName]?.fromResolveId)
+        return null
+
+      let id: string
+      if (path.isAbsolute(source)) {
+        id = source
+      }
+      else if (source.startsWith('.')) {
+        id = path.resolve(path.dirname(importer), source)
+      }
+      else {
+        const custom = { ...opts.custom, [pluginName]: { fromResolveId: true } }
+        const resolved = await this.resolve(source, importer, { ...opts, custom })
+        if (resolved === null)
+          return null
+        // Full path of the imported file
+        id = resolved.id
+      }
 
       if (cssLangFilter(id)) {
         const assetsFromCss = await extractFromFile(this, id)
