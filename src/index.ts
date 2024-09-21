@@ -314,11 +314,24 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         return map
       }, {} as Record<string, string>)
 
-      const updatedSourceMap = processAssetsInStyle(bundleSourceMap)
+      /** Assets cached under watch mode also need to be processed by `processAssetsInStyle` and `processAssetsInImporters` #92 */
+      const cacheSourceMap = isBuildWatch
+        ? Object.values(Object.fromEntries(assetCache)).reduce((map, { fileName, source }) => {
+          if (fileName && source && !outputBundle[fileName])
+            map[fileName] = String(source)
+          return map
+        }, {} as Record<string, string>)
+        : {}
+
+      const updatedSourceMap = processAssetsInStyle({ ...bundleSourceMap, ...cacheSourceMap })
       const processedSourceMap = processAssetsInImporters(updatedSourceMap)
 
       Object.keys(bundleSourceMap)
-        .filter(name => bundleSourceMap[name] !== processedSourceMap[name])
+        /**
+         * Under watch mode, Vite won't resolve assets and this plugin wont't emit them,
+         * so they won't appear in the final output. We must trigger their emit manually.
+         */
+        .filter(name => cacheSourceMap[name] || bundleSourceMap[name] !== processedSourceMap[name])
         .forEach((name) => {
           const outputPath = path.posix.join(outputDir, name)
           const updated = processedSourceMap[name]
@@ -331,17 +344,6 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
           else if (name.endsWith('.css'))
             bundle.source = updated
         })
-
-      /**
-       * Under watch mode, Vite won't resolve assets and this plugin wont't emit them,
-       * so they won't appear in the final output. We must trigger their emit manually.
-       */
-      if (isBuildWatch) {
-        assetCache.forEach(({ fileName, source }) => {
-          if (fileName && source && !outputBundle[fileName])
-            fs.writeFileSync(path.posix.join(outputDir, fileName), source)
-        })
-      }
     },
   }
 }
