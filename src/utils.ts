@@ -92,6 +92,8 @@ export function getCaptured(input: string, re: RegExp): string[] {
  * A simplified version of `String.replaceAll` to address compatibility issues on Node 14
  */
 export function replaceAll(source: string, searchValue: string, replaceValue: string): string {
+  if (typeof source.replaceAll === 'function')
+    return source.replaceAll(searchValue, replaceValue)
   const escaped = escapeStringRegexp(searchValue)
   const replaceRegExp = new RegExp(escaped, 'g')
   return source.replace(replaceRegExp, replaceValue)
