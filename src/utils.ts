@@ -91,10 +91,16 @@ export function getCaptured(input: string, re: RegExp): string[] {
 /**
  * A simplified version of `String.replaceAll` to address compatibility issues on Node 14
  */
-export function replaceAll(source: string, searchValue: string, replaceValue: string): string {
+export function replaceAll(source: string, searchValue: string | RegExp, replaceValue: string): string {
   if (typeof source.replaceAll === 'function')
     return source.replaceAll(searchValue, replaceValue)
   const escaped = escapeStringRegexp(searchValue)
   const replaceRegExp = new RegExp(escaped, 'g')
   return source.replace(replaceRegExp, replaceValue)
+}
+
+export function getReg(asset: string) {
+  const escapedAsset = asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // 转义特殊字符
+  const regex = new RegExp(`(['"\\(])(${escapedAsset})(\\?.*?)?\\1`, 'gi');
+  return regex;
 }
