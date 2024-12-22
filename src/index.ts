@@ -83,7 +83,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     const emitted: EmittedAsset = {
       fileName: filename,
       name: fullname,
-      source: content,
+      source: content.toString(),
       type: 'asset',
     }
     context.emitFile(emitted)
