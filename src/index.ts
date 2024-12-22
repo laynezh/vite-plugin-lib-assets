@@ -14,7 +14,6 @@ import { processStyle } from './processStyle'
 
 type LoaderContext = Parameters<typeof interpolateName>[0]
 
-type FuncName = (resourcePath: string, resourceQuery: string) => string
 type FuncOutputPath = (
   url: string,
   resourcePath: string,
@@ -24,7 +23,7 @@ type FuncOutputPath = (
 export interface Options {
   include?: string | RegExp | (string | RegExp)[]
   exclude?: string | RegExp | (string | RegExp)[]
-  name?: string | FuncName
+  name?: string
   limit?: number
   outputPath?: string | FuncOutputPath
   regExp?: RegExp
@@ -68,7 +67,6 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       resourcePath: pureId,
       resourceQuery,
     } as LoaderContext
-    // @ts-expect-error loader-utils
     const url = interpolateName(loaderContext, name, { content, regExp })
 
     let assetPath = url

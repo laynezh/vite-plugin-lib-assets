@@ -47,7 +47,7 @@ Example: [`playground/`](./playground/)
 export interface Options {
   include?: string | RegExp | (string | RegExp)[]
   exclude?: string | RegExp | (string | RegExp)[]
-  name?: string | ((resourcePath: string, resourceQuery: string) => string)
+  name?: string
   limit?: number
   outputPath?: string | ((url: string, resourcePath: string, resourceQuery: string) => string)
   regExp?: RegExp
@@ -85,30 +85,14 @@ export interface Options {
 
 资源文件的输出名称，与 `file-loader` 的 [`name`](https://github.com/webpack-contrib/file-loader#name) 配置行为一致
 
-- Type: `string | ((resourcePath: string, resourceQuery: string) => string)`
+- Type: `string
 - Default: `'[contenthash].[ext]'`
 - Example:
-  - `string`
-    ```typescript
-    assetsLibPlugin({
-      name: '[name].[contenthash:8].[ext]?[query]'
-    })
-    ```
-  - `function`
-    ```typescript
-    assetsLibPlugin({
-      name: (resourcePath, resourceQuery) => {
-        // `resourcePath` - `/absolute/path/to/file.js`
-        // `resourceQuery` - `foo=bar`
-
-        if (process.env.NODE_ENV === 'development') {
-          return '[name].[ext]';
-        }
-
-        return  '[name].[contenthash:8].[ext]?[query]'
-      },
-    })
-    ```
+  ```typescript
+  assetsLibPlugin({
+    name: '[name].[contenthash:8].[ext]?[query]'
+  })
+  ```
 > 完整的占位符列表见 [`loader-utils#interpolatename`](https://github.com/webpack/loader-utils#interpolatename)
 
 ### `limit`

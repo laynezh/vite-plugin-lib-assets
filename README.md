@@ -47,7 +47,7 @@ Example: [`playground/`](./playground/)
 export interface Options {
   include?: string | RegExp | (string | RegExp)[]
   exclude?: string | RegExp | (string | RegExp)[]
-  name?: string | ((resourcePath: string, resourceQuery: string) => string)
+  name?: string
   limit?: number
   outputPath?: string | ((url: string, resourcePath: string, resourceQuery: string) => string)
   regExp?: RegExp
@@ -85,30 +85,14 @@ Same as `include`, but it is used to indicate the files that should to be omitte
 
 Output name of the resource file, its usage aligns with the [`name`](https://github.com/webpack-contrib/file-loader#name) option of the `file-loader`.
 
-- Type: `string | ((resourcePath: string, resourceQuery: string) => string)`
+- Type: `string`
 - Default: `'[contenthash].[ext]'`
 - Example:
-  - `string`
-    ```typescript
-    libAssetsPlugin({
-      name: '[name].[contenthash:8].[ext]?[query]'
-    })
-    ```
-  - `function`
-    ```typescript
-    libAssetsPlugin({
-      name: (resourcePath, resourceQuery) => {
-        // `resourcePath` - `/absolute/path/to/file.js`
-        // `resourceQuery` - `foo=bar`
-
-        if (process.env.NODE_ENV === 'development') {
-          return '[name].[ext]';
-        }
-
-        return  '[name].[contenthash:8].[ext]?[query]'
-      },
-    })
-    ```
+  ```typescript
+  libAssetsPlugin({
+    name: '[name].[contenthash:8].[ext]?[query]'
+  })
+  ```
 > The complete list can be found at [`loader-utils#interpolatename`](https://github.com/webpack/loader-utils#interpolatename)
 
 ### `limit`
