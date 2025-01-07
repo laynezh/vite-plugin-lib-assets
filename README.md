@@ -90,7 +90,7 @@ Output name of the resource file, its usage aligns with the [`name`](https://git
 - Example:
   ```typescript
   libAssetsPlugin({
-    name: '[name].[contenthash:8].[ext]?[query]'
+    name: '[name].[contenthash:8].[ext][query]'
   })
   ```
 > The complete list can be found at [`loader-utils#interpolatename`](https://github.com/webpack/loader-utils#interpolatename)
@@ -127,7 +127,7 @@ Specify the output path where the extracted files will be placed.
       outputPath: (url, resourcePath, resourceQuery) => {
         // `url` - file name processed by the `name` option，eg: `logo.fb2133.png`
         // `resourcePath` - `/original/absolute/path/to/file.js`
-        // `resourceQuery` - `foo=bar`
+        // `resourceQuery` - `?foo=bar`
 
         return url.endsWith('.png') ? 'image' : 'assets'
       },

@@ -62,7 +62,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   const assetsPathMap = new Map<string, string>()
   const base64AssetsPathMap = new Map<string, string>()
   const emitFile = (context: PluginContext, id: string, content: Buffer): string => {
-    const [pureId, resourceQuery] = id.split('?')
+    const [pureId, resourceQuery = ''] = /^([^?]+)(\?.*)?$/.exec(id)!.slice(1)
     const loaderContext = {
       resourcePath: pureId,
       resourceQuery,
@@ -75,7 +75,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       ? path.posix.join(outputDir(url, pureId, resourceQuery), url)
       : path.posix.join(outputDir, url)
 
-    const filename = assetPath.replace(`?${resourceQuery}`, '')
+    const filename = assetPath.replace(resourceQuery, '')
     const fullname = path.join(path.isAbsolute(outDir) ? process.cwd() : '', outDir, assetPath)
 
     const emitted: EmittedAsset = {
