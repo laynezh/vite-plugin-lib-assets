@@ -1,7 +1,7 @@
 {
   "name": "@laynezh/vite-plugin-lib-assets",
   "type": "module",
-  "version": "0.6.1",
+  "version": "1.0.0",
   "packageManager": "pnpm@8.6.2",
   "description": "A Vite Plugin extracts resource files referenced in library mode instead of embedded them as base64.",
   "license": "MIT",
