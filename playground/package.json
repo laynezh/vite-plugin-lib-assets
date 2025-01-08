@@ -1,7 +1,8 @@
 {
   "private": true,
   "scripts": {
-    "dev": "nodemon -w '../src/**/*.ts' -e .ts -x vite build"
+    "dev": "nodemon -w '../src/**/*.ts' -e .ts -x vite build",
+    "build": "vite build"
   },
   "dependencies": {
     "@fontsource-variable/raleway": "^5.0.18",

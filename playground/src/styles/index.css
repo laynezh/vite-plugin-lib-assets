@@ -3,3 +3,6 @@
 .themes-red {
   background: url('./assets/vite-logo-css-local.svg') no-repeat left top / cover;
 }
+.themes-blue {
+  background: url('./assets/chrome-css.png') no-repeat left top / cover;
+}
