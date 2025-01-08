@@ -90,7 +90,7 @@ export interface Options {
 - Example:
   ```typescript
   assetsLibPlugin({
-    name: '[name].[contenthash:8].[ext]?[query]'
+    name: '[name].[contenthash:8].[ext][query]'
   })
   ```
 > 完整的占位符列表见 [`loader-utils#interpolatename`](https://github.com/webpack/loader-utils#interpolatename)
