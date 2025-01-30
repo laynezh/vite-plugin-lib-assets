@@ -44,7 +44,11 @@ export const DEFAULT_ASSETS_RE = new RegExp(
   `\\.(${KNOWN_ASSET_TYPES.join('|')})(\\?.*)?$`,
 )
 
+export const JS_TYPES_RE = /\.(?:j|t)sx?$|\.mjs$/
+
 export const CSS_LANGS_RE = /\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss)(?:$|\?)/
+
+export const assetImportMetaUrlRE = /\bnew\s+URL\s*\(\s*('[^']+'|"[^"]+"|`[^`]+`)\s*,\s*import\.meta\.url\s*(?:,\s*)?\)/g
 
 // https://drafts.csswg.org/css-syntax-3/#identifier-code-point
 export const cssUrlRE = /(?<=^|[^\w\-\u0080-\uFFFF])url\((\s*('[^']+'|"[^"]+")\s*|[^'")]+)\)/

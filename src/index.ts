@@ -5,7 +5,7 @@ import { type Alias, type Plugin, type ResolvedConfig, createFilter } from 'vite
 import { type EmittedAsset, type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
 import { checkFormats, getAssetContent, getCaptured, getFileBase64, registerCustomMime, replaceAll } from './utils'
-import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, cssImageSetRE, cssUrlRE } from './constants'
+import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, JS_TYPES_RE, assetImportMetaUrlRE, cssImageSetRE, cssUrlRE } from './constants'
 import { resolveCompiler } from './compiler'
 import { getDescriptor } from './descriptorCache'
 import { resolve } from './alias'
@@ -56,6 +56,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
   }
 
   const filter = createFilter(include, exclude)
+  const jsTypeFilter = createFilter(JS_TYPES_RE)
   const cssLangFilter = createFilter(CSS_LANGS_RE)
   const assetsImporterFilter = createFilter(ASSETS_IMPORTER_RE)
   const assetCache = new Map<string, EmittedAsset>()
@@ -95,7 +96,39 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     return assetPath
   }
 
-  const extractFromSource = async (
+  /**
+   * extract 'vite-logo.svg' from
+   * - new URL('./assets/vite-logo.svg', import.meta.url)
+   */
+  const extractFromJs = async (
+    context: PluginContext,
+    id: string,
+    content: string,
+  ): Promise<string[]> => {
+    const newUrlAssets = getCaptured(content, assetImportMetaUrlRE)
+
+    // skip dynamic template string
+    const staticAssets = newUrlAssets.filter(
+      asset => !(asset[0] === '`' && asset.includes('${')),
+    )
+
+    const pureAssets = staticAssets.map(asset => asset.slice(1, -1))
+
+    // skip format in base64, XML or http.
+    // Due to aliases, this is not possible to determined by the asset path is relative or absolute.
+    const concernedAssets = pureAssets.filter(
+      asset => !asset.startsWith('data:') && !/^(?:https?:)?\/\//.test(asset),
+    )
+
+    return resolve(context, alias, Array.from(new Set(concernedAssets)), id)
+  }
+
+  /**
+   * extract 'vite-logo-css-local.svg' from
+   *  - url('./assets/vite-logo-css-local.svg')
+   *  - image-set("./assets/vite-logo-css-local.svg" 1x, "./assets/vite-logo-css-local2.svg" 2x)
+   */
+  const extractFromCss = async (
     context: PluginContext,
     id: string,
     content: string,
@@ -140,21 +173,35 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       const descriptor = getDescriptor(pureId, descriptorOptions)
       if (descriptor === undefined)
         return []
-
-      const extractedAssetList = await Promise.all(
-        descriptor.styles.map(style =>
-          extractFromSource(context, id, style.content),
-        ),
-      )
-
+      let extractedAssetList: string[][] = []
+      if (jsTypeFilter(id)) {
+        extractedAssetList = await Promise.all(
+          [descriptor.scriptSetup, descriptor.script]
+            .filter((script) => {
+              return (
+                script
+                && script.content.includes('new URL')
+                && script.content.includes('import.meta.url')
+              )
+            })
+            .map(script => extractFromJs(context, id, script!.content)),
+        )
+      }
+      else {
+        extractedAssetList = await Promise.all(
+          descriptor.styles.map(style =>
+            extractFromCss(context, id, style.content),
+          ),
+        )
+      }
       return extractedAssetList.flatMap(extractedAssets => extractedAssets)
     }
 
-    return extractFromSource(context, id, content.toString())
+    return jsTypeFilter(id) ? extractFromJs(context, id, content.toString()) : extractFromCss(context, id, content.toString())
   }
 
   // replace base64 back to assets path
-  const processAssetsInStyle = (
+  const processAssetsInBase64 = (
     bundleSourceMap: Record<string, string>,
   ): Record<string, string> => {
     const updatedSourceMap = { ...bundleSourceMap }
@@ -253,10 +300,10 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         id = resolved.id
       }
 
-      if (cssLangFilter(id)) {
-        const assetsFromCss = await extractFromFile(this, id)
+      if (jsTypeFilter(id) || cssLangFilter(id)) {
+        const assetsExtracted = await extractFromFile(this, id)
 
-        const validAssets = assetsFromCss
+        const validAssets = assetsExtracted
           .map(aid => path.resolve(path.dirname(id), aid))
           .filter(id => filter(id))
           .map(id => ({ id, content: getAssetContent(id) }))
@@ -312,7 +359,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         return map
       }, {} as Record<string, string>)
 
-      /** Assets cached under watch mode also need to be processed by `processAssetsInStyle` and `processAssetsInImporters` #92 */
+      /** Assets cached under watch mode also need to be processed by `processAssetsInBase64` and `processAssetsInImporters` #92 */
       const cacheSourceMap = isBuildWatch
         ? Object.values(Object.fromEntries(assetCache)).reduce((map, { fileName, source }) => {
           if (fileName && source && !outputBundle[fileName])
@@ -321,7 +368,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         }, {} as Record<string, string>)
         : {}
 
-      const updatedSourceMap = processAssetsInStyle({ ...bundleSourceMap, ...cacheSourceMap })
+      const updatedSourceMap = processAssetsInBase64({ ...bundleSourceMap, ...cacheSourceMap })
       const processedSourceMap = processAssetsInImporters(updatedSourceMap)
 
       Object.keys(bundleSourceMap)
