@@ -284,7 +284,8 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
        * skip the public assets
        * @see https://vite.dev/guide/assets.html#the-public-directory
        */
-      if (checkPublicAsset(source, viteConfig.publicDir)) return null
+      if (checkPublicAsset(source, viteConfig.publicDir))
+        return null
 
       // skip resolves triggered by plugin self
       if (opts.custom?.[pluginName]?.fromResolveId)
