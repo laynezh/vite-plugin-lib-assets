@@ -115,14 +115,17 @@ const publicFileCache = new Map<string, boolean>()
  * @param publicDir - The public directory path
  * @returns True if the asset is under the public directory, false otherwise
  */
-export const checkPublicAsset = (source: string, publicDir: ResolvedConfig['publicDir']): boolean => {
-  if (!source.startsWith('/') || !publicDir) return false;
+export function checkPublicAsset(source: string, publicDir: ResolvedConfig['publicDir']): boolean {
+  if (!source.startsWith('/') || !publicDir)
+    return false
   const publicFile = path.posix.join(publicDir, source)
 
-  if (publicFileCache.has(publicFile)) return publicFileCache.get(publicFile)!
+  if (publicFileCache.has(publicFile))
+    return publicFileCache.get(publicFile)!
 
   const exists = fs.existsSync(publicFile)
-  if (exists) publicFileCache.set(publicFile, exists)
+  if (exists)
+    publicFileCache.set(publicFile, exists)
 
   return exists
 }
