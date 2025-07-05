@@ -362,7 +362,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       /** Assets cached under watch mode also need to be processed by `processAssetsInBase64` and `processAssetsInImporters` #92 */
       const cacheSourceMap = isBuildWatch
         ? Object.values(Object.fromEntries(assetCache)).reduce((map, { fileName, source }) => {
-          if (fileName && source && !outputBundle[fileName])
+          if (fileName && source && !bundleSourceMap[fileName])
             map[fileName] = String(source)
           return map
         }, {} as Record<string, string>)
@@ -372,11 +372,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       const processedSourceMap = processAssetsInImporters(updatedSourceMap)
 
       Object.keys(bundleSourceMap)
-        /**
-         * Under watch mode, Vite won't resolve assets and this plugin wont't emit them,
-         * so they won't appear in the final output. We must trigger their emit manually.
-         */
-        .filter(name => cacheSourceMap[name] || bundleSourceMap[name] !== processedSourceMap[name])
+        .filter(name => bundleSourceMap[name] !== processedSourceMap[name])
         .forEach((name) => {
           const outputPath = path.posix.join(outputDir, name)
           const updated = processedSourceMap[name]
@@ -389,6 +385,16 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
           else if (name.endsWith('.css'))
             bundle.source = updated
         })
+
+      /**
+       * Under watch mode, Vite won't resolve assets and this plugin wont't emit them,
+       * so they won't appear in the final output. We must trigger their emit manually.
+       */
+      Object.keys(cacheSourceMap).forEach((name) => {
+        const outputPath = path.posix.join(outputDir, name)
+        const updated = cacheSourceMap[name]
+        fs.writeFileSync(outputPath, updated)
+      })
     },
   }
 }
