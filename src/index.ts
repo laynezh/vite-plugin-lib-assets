@@ -4,7 +4,7 @@ import type { Buffer } from 'node:buffer'
 import { type Alias, type Plugin, type ResolvedConfig, createFilter } from 'vite'
 import { type EmittedAsset, type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
-import { checkFormats, getAssetContent, getCaptured, getFileBase64, registerCustomMime, replaceAll } from './utils'
+import { checkFormats, checkPublicAsset, getAssetContent, getCaptured, getFileBase64, registerCustomMime, replaceAll } from './utils'
 import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, JS_TYPES_RE, assetImportMetaUrlRE, cssImageSetRE, cssUrlRE } from './constants'
 import { resolveCompiler } from './compiler'
 import { getDescriptor } from './descriptorCache'
@@ -279,6 +279,12 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     async resolveId(source, importer = '', opts) {
       if (!isLibBuild)
         return null
+
+      /**
+       * skip the public assets
+       * @see https://vite.dev/guide/assets.html#the-public-directory
+       */
+      if (checkPublicAsset(source, viteConfig.publicDir)) return null
 
       // skip resolves triggered by plugin self
       if (opts.custom?.[pluginName]?.fromResolveId)

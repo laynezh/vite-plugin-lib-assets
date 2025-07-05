@@ -1,6 +1,7 @@
 import fs from 'node:fs'
+import path from 'node:path'
 import type { Buffer } from 'node:buffer'
-import { type LibraryFormats, version } from 'vite'
+import { type LibraryFormats, type ResolvedConfig, version } from 'vite'
 import { gte } from 'semver'
 import * as mrmime from 'mrmime'
 import escapeStringRegexp from 'escape-string-regexp'
@@ -105,4 +106,23 @@ export function replaceAll(source: string, searchValue: string, replaceValue: st
   const escaped = escapeStringRegexp(searchValue)
   const replaceRegExp = new RegExp(escaped, 'g')
   return source.replace(replaceRegExp, replaceValue)
+}
+
+const publicFileCache = new Map<string, boolean>()
+/**
+ * Check if the asset is under the public directory
+ * @param source - The source file path
+ * @param publicDir - The public directory path
+ * @returns True if the asset is under the public directory, false otherwise
+ */
+export const checkPublicAsset = (source: string, publicDir: ResolvedConfig['publicDir']): boolean => {
+  if (!source.startsWith('/') || !publicDir) return false;
+  const publicFile = path.posix.join(publicDir, source)
+
+  if (publicFileCache.has(publicFile)) return publicFileCache.get(publicFile)!
+
+  const exists = fs.existsSync(publicFile)
+  if (exists) publicFileCache.set(publicFile, exists)
+
+  return exists
 }
