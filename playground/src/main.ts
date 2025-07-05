@@ -1,5 +1,6 @@
 /* eslint-disable import/newline-after-import */
 import '@fontsource-variable/raleway'
+import publicLogo from '/vite-logo-public.svg'
 import app from './app.vue'
 // import logo from './assets/vite-logo.svg'
 import './main.css'
@@ -12,5 +13,6 @@ console.log(new URL('./assets/vite-logo.svg', import.meta.url))
 
 export {
   app,
+  publicLogo,
   // logo,
 }
