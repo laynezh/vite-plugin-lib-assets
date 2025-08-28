@@ -335,16 +335,18 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
           return null
 
         const assetPath = emitFile(this, id, content)
+        const [pureId] = id.split('?', 2)
+        const extname = path.extname(pureId)
 
         // Cache the resource address for the "load" hook
         if (publicUrl) {
           assetsPathMap.set(id, assetPath)
-          return id
+          return extname === '.json' ? `${id}?url` : id;
         }
 
         // External file with the configured path, eg. './assets/image.hash.png'
         return {
-          id: `./${assetPath}`,
+          id: `./${assetPath}${extname === '.json' ? '?url' : id}`,
           external: 'relative',
         }
       }
@@ -353,7 +355,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       if (!isLibBuild)
         return null
 
-      const assetPath = assetsPathMap.get(id)
+      const assetPath = assetsPathMap.get(id.replace('?url', ''))
       if (assetPath)
         return `export default '${publicDir}${assetPath}'`
     },
