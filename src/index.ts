@@ -4,13 +4,15 @@ import type { Buffer } from 'node:buffer'
 import { type Alias, type Plugin, type ResolvedConfig, createFilter } from 'vite'
 import { type EmittedAsset, type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
-import { checkFormats, checkPublicAsset, getAssetContent, getCaptured, getFileBase64, registerCustomMime, replaceAll } from './utils'
+import { appendUrlQuery, checkFormats, checkPublicAsset, getAssetContent, getCaptured, getFileBase64, registerCustomMime, removeUrlQuery, replaceAll } from './utils'
 import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, JS_TYPES_RE, assetImportMetaUrlRE, cssImageSetRE, cssUrlRE } from './constants'
 import { resolveCompiler } from './compiler'
 import { getDescriptor } from './descriptorCache'
 import { resolve } from './alias'
 import type { DescriptorOptions } from './types'
 import { processStyle } from './processStyle'
+
+export { DEFAULT_ASSETS_RE } from './constants'
 
 type LoaderContext = Parameters<typeof interpolateName>[0]
 
@@ -341,12 +343,12 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         // Cache the resource address for the "load" hook
         if (publicUrl) {
           assetsPathMap.set(id, assetPath)
-          return extname === '.json' ? `${id}?url` : id;
+          return extname === '.json' ? appendUrlQuery(id, 'url') : id;
         }
 
         // External file with the configured path, eg. './assets/image.hash.png'
         return {
-          id: `./${assetPath}${extname === '.json' ? '?url' : id}`,
+          id: extname === '.json' ? appendUrlQuery(`./${assetPath}`, 'url') : `./${assetPath}`,
           external: 'relative',
         }
       }
@@ -355,7 +357,10 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
       if (!isLibBuild)
         return null
 
-      const assetPath = assetsPathMap.get(id.replace('?url', ''))
+      const [pureId] = id.split('?', 2)
+      const extname = path.extname(pureId)
+      const assetsKey = extname === '.json' ? removeUrlQuery(id, 'url') : id
+      const assetPath = assetsPathMap.get(assetsKey)
       if (assetPath)
         return `export default '${publicDir}${assetPath}'`
     },
