@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import Inspect from 'vite-plugin-inspect'
-import libAssets from '../src/'
+import libAssets, { DEFAULT_ASSETS_RE } from '../src/'
 
 export default defineConfig({
   resolve: {
@@ -34,6 +34,10 @@ export default defineConfig({
     vue(),
     Inspect(),
     libAssets({
+      include: [
+        DEFAULT_ASSETS_RE,
+        /\.json(\?.*)?$/,
+      ],
       name: '[name].[contenthash:8].[ext]',
     }),
   ],
