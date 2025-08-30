@@ -4,6 +4,7 @@ import publicLogo from '/vite-logo-public.svg'
 import app from './app.vue'
 // import logo from './assets/vite-logo.svg'
 import './main.css'
+import test from './assets/test.json'
 
 // eslint-disable-next-line no-console
 import('./async').then(console.log.bind(null, 'async'))
@@ -14,5 +15,6 @@ console.log(new URL('./assets/vite-logo.svg', import.meta.url))
 export {
   app,
   publicLogo,
+  test,
   // logo,
 }
