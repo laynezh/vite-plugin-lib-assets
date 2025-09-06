@@ -343,7 +343,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         // Cache the resource address for the "load" hook
         if (publicUrl) {
           assetsPathMap.set(id, assetPath)
-          return extname === '.json' ? appendUrlQuery(id, 'url') : id;
+          return extname === '.json' ? appendUrlQuery(id, 'url') : id
         }
 
         // External file with the configured path, eg. './assets/image.hash.png'
