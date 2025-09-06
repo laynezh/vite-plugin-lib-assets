@@ -137,7 +137,6 @@ export function checkPublicAsset(source: string, publicDir: ResolvedConfig['publ
  * @returns The URL with the key-value pair appended
  */
 export function appendUrlQuery(url: string, kv: string): string {
-  console.log('appendUrlQuery', url, kv)
   return url.includes('?') ? `${url}&${kv}` : `${url}?${kv}`
 }
 
@@ -148,7 +147,6 @@ export function appendUrlQuery(url: string, kv: string): string {
  * @returns The URL without the key-value pair
  */
 export function removeUrlQuery(url: string, kv: string): string {
-  console.log('removeUrlQuery', url, kv)
   const [urlWithoutQuery, query = ''] = url.split('?')
   const queryParams = query.split('&')
   const filteredQueryParams = queryParams.filter(param => param !== kv)
