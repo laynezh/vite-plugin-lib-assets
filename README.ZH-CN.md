@@ -52,6 +52,7 @@ export interface Options {
   outputPath?: string | ((url: string, resourcePath: string, resourceQuery: string) => string)
   regExp?: RegExp
   publicUrl?: string
+  convertToNewUrl?: boolean
 }
 ```
 
@@ -161,3 +162,75 @@ export interface Options {
     publicUrl: 'https://cdn.jsdelivr.net/npm/@laynezh/vite-plugin-lib-assets'
   })
   ```
+
+### `convertToNewUrl`
+
+将资源的 import 语句转换为 `new URL()` 形式输出。
+
+- Type: `boolean`
+- Default: `false`
+- Example:
+  ```typescript
+  assetsLibPlugin({
+    convertToNewUrl: true
+  })
+  ```
+
+#### 为什么需要这个选项？
+
+当你使用标准的 ES 模块语法导入资源时：
+```typescript
+import logo from './logo.png'
+```
+
+默认情况下，插件会在输出文件中保留这个 import 语句，这可能会在某些环境或构建工具中引发问题，因为不是所有工具都能正确处理资源的 import 语句。
+
+启用 `convertToNewUrl: true` 后，输出会被转换为：
+```typescript
+const logo = new URL('./assets/logo.abc123.png', import.meta.url).href
+```
+
+这种方式：
+- ✅ 在更多环境中工作（Node.js ESM、浏览器等）
+- ✅ 对资源解析更加明确
+- ✅ 与打包工具和构建工具有更好的兼容性
+- ✅ 遵循 [WHATWG URL 标准](https://url.spec.whatwg.org/)
+
+#### 处理原生 `new URL()` 写法的限制
+
+⚠️ **重要提示**：本插件在处理源代码中**已经使用** `new URL()` 语法编写的资源时存在限制，**特别是在 `export * from` 场景下**。
+
+**主要问题出现在重导出时：**
+
+如果你在源代码中这样写：
+```typescript
+// 文件: some-module.ts
+// ❌ 当被重导出时，插件无法正确处理这种写法
+export const logo = new URL('./logo.png', import.meta.url).href
+
+// 文件: index.ts
+export * from './some-module'  // ❌ 资源引用可能会丢失
+```
+
+**为什么会这样：**
+1. Vite 内置的 `new URL()` 与 `import.meta.url` 处理在本插件运行之前就已经执行
+2. 使用 `export *` 时，模块打包可能会内联或转换代码，导致资源引用丢失
+3. 本插件主要通过模块依赖图追踪 `import` 语句，而不是运行时的 `new URL()` 调用
+
+**直接使用 `new URL()` 是可以的：**
+```typescript
+// ✅ 如果不重导出它，这样写是可以的
+const logo = new URL('./logo.png', import.meta.url).href
+console.log(logo)
+```
+
+**库作者的推荐做法：**
+```typescript
+// ✅ 使用 import 语法，让插件来转换它
+import logo from './logo.png'
+export { logo }
+
+// 启用 convertToNewUrl: true 后，输出中会变成：
+// export const logo = new URL('./assets/logo.abc123.png', import.meta.url).href
+```
+
