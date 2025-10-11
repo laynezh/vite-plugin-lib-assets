@@ -19,7 +19,8 @@ export default defineConfig({
         main: './src/main.ts',
         // mainCss: './src/main.css',
       },
-      fileName: 'main',
+      // 使用 preserveModules 时不需要 fileName，会保持原始文件名
+      // fileName: 'main',
       formats: ['es'],
     },
     sourcemap: true,
@@ -28,6 +29,10 @@ export default defineConfig({
     minify: false,
     rollupOptions: {
       external: ['vue'],
+      output: {
+        preserveModules: true, // 启用 preserveModules 来测试
+        preserveModulesRoot: 'src', // 指定模块根目录
+      },
     },
   },
   plugins: [
@@ -39,6 +44,8 @@ export default defineConfig({
         /\.json(\?.*)?$/,
       ],
       name: '[name].[contenthash:8].[ext]',
+      // 启用 import 转 new URL 功能
+      convertToNewUrl: true,
     }),
   ],
 })

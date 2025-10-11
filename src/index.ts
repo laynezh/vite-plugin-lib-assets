@@ -30,6 +30,14 @@ export interface Options {
   outputPath?: string | FuncOutputPath
   regExp?: RegExp
   publicUrl?: string
+  /**
+   * 是否将资源 import 语句转换为 new URL() 形式
+   * 当启用时，类似 `import img from './img.png'` 会被转换为
+   * `const img = new URL('./img.png', import.meta.url).href`
+   * 这有助于更好地支持现代构建工具和运行时环境
+   * @default false
+   */
+  convertToNewUrl?: boolean
 }
 
 export default function VitePluginLibAssets(options: Options = {}): Plugin {
@@ -43,6 +51,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
     outputPath,
     regExp,
     publicUrl = '',
+    convertToNewUrl = false,
   } = options
   const pluginName = 'vite-plugin-lib-assets'
   const publicDir = publicUrl.endsWith('/') ? publicUrl : `${publicUrl}/`
@@ -383,7 +392,11 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         : {}
 
       const updatedSourceMap = processAssetsInBase64({ ...bundleSourceMap, ...cacheSourceMap })
-      const processedSourceMap = processAssetsInImporters(updatedSourceMap)
+      let processedSourceMap = processAssetsInImporters(updatedSourceMap)
+
+      // Convert import statements to new URL() if enabled
+      if (convertToNewUrl)
+        processedSourceMap = convertImportsToNewUrl(processedSourceMap)
 
       Object.keys(bundleSourceMap)
         .filter(name => bundleSourceMap[name] !== processedSourceMap[name])
@@ -410,5 +423,31 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         fs.writeFileSync(outputPath, updated)
       })
     },
+  }
+
+  // Convert import statements to new URL() form
+  function convertImportsToNewUrl(bundleSourceMap: Record<string, string>): Record<string, string> {
+    const updatedSourceMap = { ...bundleSourceMap }
+
+    // Only process JS/TS output files
+    Object.keys(updatedSourceMap)
+      .filter(name => /\.(m?js|ts)$/.test(name))
+      .forEach((name) => {
+        let updated = updatedSourceMap[name]
+
+        // Match: import xxx from "./assets/yyy.png" or import xxx from "./assets/yyy.png"
+        // Group 1: variable name, Group 2: quote char, Group 3: asset path
+        const importAssetRE = /import\s+(\w+)\s+from\s+(['"`])(\.[^'"` \t\r\n]*\.(?:png|jpe?g|gif|svg|webp|avif|ico|bmp|tiff?|woff2?|ttf|otf|eot|json))\2/gi
+
+        updated = updated.replace(importAssetRE, (_match, varName, quote, assetPath) => {
+          // Convert to: const xxx = new URL("./assets/yyy.png", import.meta.url).href
+          return `const ${varName} = new URL(${quote}${assetPath}${quote}, import.meta.url).href`
+        })
+
+        if (updatedSourceMap[name] !== updated)
+          updatedSourceMap[name] = updated
+      })
+
+    return updatedSourceMap
   }
 }

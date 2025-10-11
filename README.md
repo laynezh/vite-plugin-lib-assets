@@ -52,6 +52,7 @@ export interface Options {
   outputPath?: string | ((url: string, resourcePath: string, resourceQuery: string) => string)
   regExp?: RegExp
   publicUrl?: string
+  convertToNewUrl?: boolean
 }
 ```
 
@@ -160,3 +161,75 @@ Access path prefix for built resource files. ***Once provided, it will take effe
     publicUrl: 'https://cdn.jsdelivr.net/npm/@laynezh/vite-plugin-lib-assets'
   })
   ```
+
+### `convertToNewUrl`
+
+Convert asset import statements to `new URL()` form in the output.
+
+- Type: `boolean`
+- Default: `false`
+- Example:
+  ```typescript
+  libAssetsPlugin({
+    convertToNewUrl: true
+  })
+  ```
+
+#### Why this option?
+
+When you use the standard ES module syntax to import assets:
+```typescript
+import logo from './logo.png'
+```
+
+By default, this plugin will keep the import statement in the output, which may cause issues in certain environments or build tools that don't handle asset imports well.
+
+With `convertToNewUrl: true`, the output will be converted to:
+```typescript
+const logo = new URL('./assets/logo.abc123.png', import.meta.url).href
+```
+
+This approach:
+- ✅ Works in more environments (Node.js ESM, browsers, etc.)
+- ✅ More explicit about asset resolution
+- ✅ Better compatibility with bundlers and build tools
+- ✅ Follows the [WHATWG URL Standard](https://url.spec.whatwg.org/)
+
+#### Limitations with native `new URL()` syntax
+
+⚠️ **Important**: This plugin has limitations when processing assets that are **already written** using the `new URL()` syntax in your source code, **especially in `export * from` scenarios**.
+
+**The main issue occurs with re-exports:**
+
+If you write in your source code:
+```typescript
+// file: some-module.ts
+// ❌ This will NOT be handled correctly when re-exported
+export const logo = new URL('./logo.png', import.meta.url).href
+
+// file: index.ts
+export * from './some-module'  // ❌ The asset reference may be lost
+```
+
+**Why this happens:**
+1. Vite's built-in handling of `new URL()` with `import.meta.url` processes the asset before this plugin runs
+2. When using `export *`, the module bundling may inline or transform the code in ways that lose the asset reference
+3. This plugin primarily tracks `import` statements through the module graph, not runtime `new URL()` calls
+
+**Direct usage of `new URL()` works fine:**
+```typescript
+// ✅ This works if you DON'T re-export it
+const logo = new URL('./logo.png', import.meta.url).href
+console.log(logo)
+```
+
+**Recommended approach for library authors:**
+```typescript
+// ✅ Use import syntax, let the plugin convert it
+import logo from './logo.png'
+export { logo }
+
+// With convertToNewUrl: true, this becomes in the output:
+// export const logo = new URL('./assets/logo.abc123.png', import.meta.url).href
+```
+
