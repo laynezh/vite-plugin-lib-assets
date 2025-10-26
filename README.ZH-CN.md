@@ -41,6 +41,10 @@ Example: [`playground/`](./playground/)
 
 - 如果将 `build.ssr` 设置为 `true`，你应该同时开启 `build.ssrEmitAssets` 来输出资源文件。
 
+### 使用范围
+
+- 插件不会把 `import icon from './icon.svg'` 这样的语句自动转换为 `new URL('./icon.svg', import.meta.url)`。此类语法转换应当交给 Vite 内置的资源处理流程或其他专用插件来完成，本插件的职责是确保在库构建时把已经引用的文件输出为独立资源。
+
 ## 配置项
 
 ```typescript

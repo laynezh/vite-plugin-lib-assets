@@ -41,6 +41,10 @@ Example: [`playground/`](./playground/)
 
 - If `build.ssr` is set to `true`, you might want to enable `build.ssrEmitAssets`, so assets are emitted.
 
+### Scope
+
+- This plugin won't rewrite asset `import` statements (for example, `import icon from './icon.svg'`) into `new URL('./icon.svg', import.meta.url)`. That transformation is handled by Vite's built-in asset pipeline or other dedicated plugins. `@laynezh/vite-plugin-lib-assets` focuses on extracting the files once they are referenced during a library build.
+
 ## Option
 
 ```typescript
