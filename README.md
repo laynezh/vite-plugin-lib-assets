@@ -48,7 +48,7 @@ export interface Options {
   include?: string | RegExp | (string | RegExp)[]
   exclude?: string | RegExp | (string | RegExp)[]
   name?: string
-  limit?: number
+  limit?: number | ((filePath: string, content: Buffer) => boolean | undefined)
   outputPath?: string | ((url: string, resourcePath: string, resourceQuery: string) => string)
   regExp?: RegExp
   publicUrl?: string
@@ -99,14 +99,27 @@ Output name of the resource file, its usage aligns with the [`name`](https://git
 
 Files larger than the `limit` will be extracted to the output directory, smaller files will remain embedded in the artifact in base64 format.
 
-- Type: `number`，unit `Byte`
+- Type: `number | ((filePath: string, content: Buffer) => boolean | undefined)`
 - Default: `undefined`，any size of resource files will be extracted
 - Example:
-  ```typescript
-  libAssetsPlugin({
-    limit: 1024 * 8 // 8KB
-  })
-  ```
+  - `number` (unit: `Byte`)
+    ```typescript
+    libAssetsPlugin({
+      limit: 1024 * 8 // 8KB
+    })
+    ```
+  - `function`
+    ```typescript
+    libAssetsPlugin({
+      limit: (filePath, content) => {
+        // Return `false` to inline the file as base64
+        // Return `true` or `undefined` to extract the file
+        if (filePath.endsWith('.json')) return true
+        // Files smaller than 8KB will be inlined
+        if (content.byteLength < 1024 * 8) return false
+      }
+    })
+    ```
 
 ### `outputPath`
 

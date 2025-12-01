@@ -48,7 +48,7 @@ export interface Options {
   include?: string | RegExp | (string | RegExp)[]
   exclude?: string | RegExp | (string | RegExp)[]
   name?: string
-  limit?: number
+  limit?: number | ((filePath: string, content: Buffer) => boolean | undefined)
   outputPath?: string | ((url: string, resourcePath: string, resourceQuery: string) => string)
   regExp?: RegExp
   publicUrl?: string
@@ -99,14 +99,27 @@ export interface Options {
 
 低于 `limit` 设置体积的文件会以 base64 的格式內联到产物中
 
-- Type: `number`，单位 `Byte`
+- Type: `number | ((filePath: string, content: Buffer) => boolean | undefined)`
 - Default: `undefined`，表示所有文件都不会被内联
 - Example:
-  ```typescript
-  assetsLibPlugin({
-    limit: 1024 * 8 // 8KB
-  })
-  ```
+  - `number`（单位：`Byte`）
+    ```typescript
+    assetsLibPlugin({
+      limit: 1024 * 8 // 8KB
+    })
+    ```
+  - `function`
+    ```typescript
+    assetsLibPlugin({
+      limit: (filePath, content) => {
+        // 返回 `false` 会将文件内联为 base64
+        // 返回 `true` 或 `undefined` 会提取文件
+        if (filePath.endsWith('.json')) return true
+        // 小于 8KB 的文件会被内联
+        if (content.byteLength < 1024 * 8) return false
+      }
+    })
+    ```
 
 ### `outputPath`
 

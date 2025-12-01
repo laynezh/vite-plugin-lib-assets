@@ -39,6 +39,10 @@ export default defineConfig({
         /\.json(\?.*)?$/,
       ],
       name: '[name].[contenthash:8].[ext]',
+      limit: (filePath) => {
+        if (filePath.endsWith('.json'))
+          return true
+      },
     }),
   ],
 })
