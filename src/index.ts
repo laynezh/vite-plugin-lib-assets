@@ -4,33 +4,19 @@ import type { Buffer } from 'node:buffer'
 import { type Alias, type Plugin, type ResolvedConfig, createFilter } from 'vite'
 import { type EmittedAsset, type PluginContext } from 'rollup'
 import { interpolateName } from 'loader-utils'
-import { appendUrlQuery, checkFormats, checkPublicAsset, getAssetContent, getCaptured, getFileBase64, registerCustomMime, removeUrlQuery, replaceAll } from './utils'
+import { appendUrlQuery, checkFormats, checkPublicAsset, getAssetContent, getCaptured, getFileBase64, registerCustomMime, removeUrlQuery, replaceAll, shouldProcess } from './utils'
 import { ASSETS_IMPORTER_RE, CSS_LANGS_RE, DEFAULT_ASSETS_RE, JS_TYPES_RE, assetImportMetaUrlRE, cssImageSetRE, cssUrlRE } from './constants'
 import { resolveCompiler } from './compiler'
 import { getDescriptor } from './descriptorCache'
 import { resolve } from './alias'
-import type { DescriptorOptions } from './types'
+import type { DescriptorOptions, Options } from './types'
 import { processStyle } from './processStyle'
 
 export { DEFAULT_ASSETS_RE } from './constants'
 
+export type { Options }
+
 type LoaderContext = Parameters<typeof interpolateName>[0]
-
-type FuncOutputPath = (
-  url: string,
-  resourcePath: string,
-  resourceQuery: string
-) => string
-
-export interface Options {
-  include?: string | RegExp | (string | RegExp)[]
-  exclude?: string | RegExp | (string | RegExp)[]
-  name?: string
-  limit?: number
-  outputPath?: string | FuncOutputPath
-  regExp?: RegExp
-  publicUrl?: string
-}
 
 export default function VitePluginLibAssets(options: Options = {}): Plugin {
   registerCustomMime()
@@ -316,7 +302,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
           .map(aid => path.resolve(path.dirname(id), aid))
           .filter(id => filter(id))
           .map(id => ({ id, content: getAssetContent(id) }))
-          .filter(({ content }) => limit && content ? content.byteLength > limit : true)
+          .filter(({ id, content }) => content ? shouldProcess(id, content, limit) : true)
 
         validAssets.forEach(({ id, content }) => {
           let assetPath = emitFile(this, id, content!)
@@ -333,7 +319,7 @@ export default function VitePluginLibAssets(options: Options = {}): Plugin {
         if (!content)
           return null
 
-        if (limit && content.byteLength < limit)
+        if (!shouldProcess(id, content, limit))
           return null
 
         const assetPath = emitFile(this, id, content)

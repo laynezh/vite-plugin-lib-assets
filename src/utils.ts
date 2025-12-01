@@ -6,6 +6,7 @@ import { gte } from 'semver'
 import * as mrmime from 'mrmime'
 import escapeStringRegexp from 'escape-string-regexp'
 import { svgToDataURL } from './vitools'
+import type { Options } from './types'
 
 export function isObject(value: unknown): value is Record<string, any> {
   return Object.prototype.toString.call(value) === '[object Object]'
@@ -147,10 +148,33 @@ export function appendUrlQuery(url: string, kv: string): string {
  * @returns The URL without the key-value pair
  */
 export function removeUrlQuery(url: string, kv: string): string {
+  if (!url.includes('?'))
+    return url
   const [urlWithoutQuery, query = ''] = url.split('?')
   const queryParams = query.split('&')
   const filteredQueryParams = queryParams.filter(param => param !== kv)
   if (filteredQueryParams.length === 0)
     return urlWithoutQuery
   return `${urlWithoutQuery}?${filteredQueryParams.join('&')}`
+}
+
+/**
+ * Check if the asset should be processed based on the limit option
+ * @param id - The asset ID
+ * @param content - The asset content
+ * @param limit - The limit option
+ * @returns True if the asset should be processed, false otherwise
+ */
+export function shouldProcess(id: string, content: Buffer, limit: Options['limit']): boolean {
+  if (limit === undefined)
+    return true
+
+  if (typeof limit === 'function') {
+    if (limit(id, content!) === false)
+      return false
+  }
+  else if (content.byteLength < limit) {
+    return false
+  }
+  return true
 }
